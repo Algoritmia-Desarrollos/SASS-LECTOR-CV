@@ -8,8 +8,6 @@ const passwordInput = document.getElementById('password-input');
 const errorMessage = document.getElementById('error-message');
 const successView = document.getElementById('success-view');
 const authView = document.getElementById('auth-view');
-
-// Los nuevos botones separados
 const loginBtn = document.getElementById('login-btn');
 const registerBtn = document.getElementById('register-btn');
 
@@ -56,18 +54,17 @@ registerBtn.addEventListener('click', async () => {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         
-        // El trigger en la base de datos creará el perfil.
-        // Aquí solo mostramos el mensaje de confirmación.
         authView.classList.add('hidden');
         successView.classList.remove('hidden');
     } catch (error) {
+        // La función getFriendlyErrorMessage se encarga de mostrar el mensaje correcto.
         showError(getFriendlyErrorMessage(error));
     } finally {
         setLoading(false);
     }
 });
 
-// Listener para el botón de Google (sin cambios)
+// Listener para el botón de Google
 googleAuthBtn.addEventListener('click', async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -107,9 +104,21 @@ function hideError() {
     errorMessage.classList.add('hidden');
 }
 
+// =================================================================
+//    AQUÍ ESTÁ LA LÓGICA MEJORADA PARA LOS MENSAJES DE ERROR
+// =================================================================
 function getFriendlyErrorMessage(error) {
-    if (error.message.includes('Invalid login credentials')) return 'Email o contraseña incorrectos.';
-    if (error.message.includes('User already registered')) return 'Este email ya está registrado. Por favor, inicia sesión.';
-    if (error.message.includes('Password should be at least 6 characters')) return 'La contraseña debe tener al menos 6 caracteres.';
+    // Si el mensaje de error de Supabase incluye "User already registered",
+    // mostramos tu mensaje personalizado.
+    if (error.message.includes('User already registered')) {
+        return 'Este email ya está registrado. Por favor, inicia sesión.';
+    }
+    if (error.message.includes('Invalid login credentials')) {
+        return 'Email o contraseña incorrectos.';
+    }
+    if (error.message.includes('Password should be at least 6 characters')) {
+        return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    // Para cualquier otro error, mostramos un mensaje genérico.
     return 'Ocurrió un error. Por favor, inténtalo de nuevo.';
 }
