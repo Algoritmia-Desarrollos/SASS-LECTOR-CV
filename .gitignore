@@ -1,0 +1,2 @@
+# Ignorar el archivo que contiene las claves de Supabase
+src/env.js
