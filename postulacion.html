@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Postulación - Selecta CV</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <main class="w-full max-w-2xl">
+        <div class="bg-white shadow-lg rounded-xl p-8">
+            
+            <div id="loading-view" class="text-center text-gray-500 py-10">
+                <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                <p class="mt-2">Cargando Búsqueda...</p>
+            </div>
+
+            <div id="aviso-header" class="hidden text-center pb-6 border-b border-gray-200 mb-6">
+                <h1 id="aviso-titulo" class="text-3xl font-bold text-gray-900"></h1>
+                <p class="mt-2 text-gray-600">Tu perfil será considerado para esta y futuras búsquedas laborales de la empresa.</p>
+            </div>
+            
+            <div id="form-view" class="hidden">
+                <form id="cv-form">
+                    <label for="file-input" id="drop-zone" class="cursor-pointer bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition hover:border-indigo-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <i id="upload-icon" class="fa-solid fa-cloud-arrow-up text-4xl text-gray-400"></i>
+                            <span id="file-label-text" class="mt-4 font-semibold text-gray-700">Arrastra y suelta tu CV aquí</span>
+                            <span class="mt-1 text-sm text-gray-500">o haz clic para seleccionar</span>
+                            <span id="upload-hint" class="mt-4 text-xs text-gray-400">Solo archivos PDF, tamaño máximo: 5MB</span>
+                        </div>
+                    </label>
+                    <input type="file" id="file-input" accept="application/pdf" class="hidden">
+
+                    <button type="submit" id="submit-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        <span id="submit-btn-text">Enviar Postulación</span>
+                    </button>
+                </form>
+            </div>
+
+            <div id="success-view" class="hidden text-center py-10">
+                <i class="fa-solid fa-circle-check text-6xl text-green-500"></i>
+                <h2 class="mt-4 text-2xl font-bold text-gray-900">¡Gracias por postularte!</h2>
+                <p class="mt-2 text-gray-600">Hemos recibido tu CV. Si tu perfil se adapta a los requisitos, nos pondremos en contacto contigo.</p>
+            </div>
+
+            <div id="error-view" class="hidden text-center py-10">
+                <i class="fa-solid fa-circle-xmark text-6xl text-red-500"></i>
+                <h2 id="error-title" class="mt-4 text-2xl font-bold text-gray-900">Búsqueda no disponible</h2>
+                <p id="error-message" class="mt-2 text-gray-600">Esta búsqueda laboral ya no se encuentra activa.</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="src/postulacion.js"></script>
+
+</body>
+</html>

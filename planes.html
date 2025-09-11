@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actualizar Plan - Selecta CV</title>
+
+  <script type="module" src="src/auth-guard.js"></script>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100">
+
+  <nav class="bg-white shadow-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <a href="lista-avisos.html" class="text-2xl font-bold text-gray-800">Selecta CV</a>
+          </div>
+      </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+        <i class="fa-solid fa-rocket text-5xl text-indigo-500"></i>
+        <h1 class="mt-4 text-4xl font-extrabold text-gray-900">Alcanzaste el límite de tu plan gratuito</h1>
+        <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+            ¡Excelente trabajo! Has analizado tus 100 CVs de prueba. Para continuar descubriendo talento sin límites, elige uno de nuestros planes.
+        </p>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="border border-gray-300 bg-gray-50 rounded-xl p-8 flex flex-col opacity-60">
+            <h3 class="text-xl font-semibold text-gray-800">Gratis</h3>
+            <p class="text-gray-500 mt-2">Tu plan actual.</p>
+            <p class="text-4xl font-bold text-gray-900 my-6">$0<span class="text-lg font-medium text-gray-500">/mes</span></p>
+            <ul class="space-y-3 text-gray-600 flex-grow">
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>100 análisis de CV en total</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>1 Usuario</li>
+            </ul>
+            <button class="mt-8 block w-full text-center bg-gray-400 text-white font-semibold py-3 rounded-lg cursor-not-allowed">Límite alcanzado</button>
+        </div>
+
+        <div class="border-2 border-indigo-500 bg-white rounded-xl p-8 flex flex-col relative shadow-lg">
+            <span class="absolute top-0 -translate-y-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MÁS POPULAR</span>
+            <h3 class="text-xl font-semibold text-gray-900">Básico</h3>
+            <p class="text-gray-500 mt-2">Ideal para reclutadores y startups.</p>
+            <p class="text-4xl font-bold text-gray-900 my-6">$29<span class="text-lg font-medium text-gray-500">/mes</span></p>
+            <ul class="space-y-3 text-gray-600 flex-grow">
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>500 análisis de CV por mes</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>3 Usuarios</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>Base de talentos ilimitada</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>Soporte por email</li>
+            </ul>
+            <a href="#" class="mt-8 block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">Actualizar a Básico</a>
+        </div>
+
+        <div class="border border-gray-300 bg-white rounded-xl p-8 flex flex-col">
+            <h3 class="text-xl font-semibold text-gray-900">Profesional</h3>
+            <p class="text-gray-500 mt-2">Para equipos de RRHH en crecimiento.</p>
+            <p class="text-4xl font-bold text-gray-900 my-6">$79<span class="text-lg font-medium text-gray-500">/mes</span></p>
+            <ul class="space-y-3 text-gray-600 flex-grow">
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>2000 análisis de CV por mes</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>10 Usuarios</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>Colaboración en equipo</li>
+                <li class="flex items-center"><span class="text-indigo-500 mr-2">✓</span>Soporte prioritario</li>
+            </ul>
+            <a href="#" class="mt-8 block w-full text-center bg-gray-700 hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition">Actualizar a Profesional</a>
+        </div>
+    </div>
+    <div class="text-center mt-8">
+        <p class="text-sm text-gray-500">La integración con pasarelas de pago como Stripe se configuraría aquí.</p>
+    </div>
+  </main>
+</body>
+</html>

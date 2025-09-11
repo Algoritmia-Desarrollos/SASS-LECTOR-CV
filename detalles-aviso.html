@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalles del Aviso - Selecta CV</title>
+
+  <script type="module" src="src/auth-guard.js"></script>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100">
+
+  <nav class="bg-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <a href="lista-avisos.html" class="text-2xl font-bold text-gray-800">Selecta CV</a>
+        </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+            <h1 id="aviso-titulo" class="text-3xl font-bold text-gray-900">Cargando detalles...</h1>
+            <a href="lista-avisos.html" class="text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center mt-2">
+              <i class="fa-solid fa-arrow-left mr-2"></i> Volver
+            </a>
+        </div>
+        <div class="flex space-x-2 mt-4 md:mt-0">
+            <button id="edit-aviso-btn" class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg flex items-center">
+                <i class="fa-solid fa-pencil mr-2"></i> Editar
+            </button>
+            <button id="delete-aviso-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                <i class="fa-solid fa-trash mr-2"></i> Eliminar
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Postulantes</h2>
+          <a id="ver-postulados-btn" href="#" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center justify-center">
+              <i class="fa-solid fa-users mr-2"></i>
+              <span id="postulantes-header">Ver Postulados (0)</span>
+          </a>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Descripción del Puesto</h2>
+          <p id="aviso-descripcion" class="text-gray-700 whitespace-pre-wrap">Cargando...</p>
+          
+          <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Condiciones Necesarias</h3>
+          <ul id="necesarias-list" class="list-disc list-inside space-y-1 text-gray-600"><li>Cargando...</li></ul>
+          
+          <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Condiciones Deseables</h3>
+          <ul id="deseables-list" class="list-disc list-inside space-y-1 text-gray-600"><li>Cargando...</li></ul>
+        </div>
+      </div>
+      
+      <aside class="space-y-6">
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Link Público</h3>
+            <p class="text-sm text-gray-600 mb-4">Comparte este link para que los candidatos puedan postularse directamente a esta búsqueda.</p>
+            <div class="flex">
+                <input type="text" id="link-postulante" readonly class="w-full rounded-l-md border-gray-300 shadow-sm text-sm">
+                <button id="copiar-link-btn" title="Copiar link" class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-r-md">
+                    <i id="copy-icon" class="fa-solid fa-copy"></i>
+                </button>
+            </div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Información General</h3>
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between"><dt class="text-gray-500">ID de Búsqueda:</dt><dd id="aviso-id" class="font-medium text-gray-900"></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Máx. CVs:</dt><dd id="aviso-max-cv" class="font-medium text-gray-900"></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Válido hasta:</dt><dd id="aviso-valido-hasta" class="font-medium text-gray-900"></dd></div>
+          </dl>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <div id="modal-edit-aviso" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-2xl font-bold text-gray-900">Editar Aviso</h3>
+            <button class="modal-close-btn text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm text-gray-600">La funcionalidad de edición se manejará a través de JavaScript.</p>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
+            <button class="modal-close-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Cancelar</button>
+            <button id="confirm-edit-aviso-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Guardar Cambios</button>
+        </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/detalles-aviso.js"></script>
+</body>
+</html>
