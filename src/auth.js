@@ -40,7 +40,8 @@ loginBtn.addEventListener('click', async () => {
     }
 });
 
-// Listener para el botón de CREAR CUENTA
+
+
 registerBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
@@ -51,13 +52,11 @@ registerBtn.addEventListener('click', async () => {
     setLoading(true);
 
     try {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        
-        authView.classList.add('hidden');
-        successView.classList.remove('hidden');
+        // No es necesario mostrar successView.
+        // El listener onAuthStateChange se encargará de la redirección.
     } catch (error) {
-        // La función getFriendlyErrorMessage se encarga de mostrar el mensaje correcto.
         showError(getFriendlyErrorMessage(error));
     } finally {
         setLoading(false);

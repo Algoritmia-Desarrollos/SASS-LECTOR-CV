@@ -50,17 +50,17 @@ async function loadUserInfo() {
     if (userEmailDisplay) userEmailDisplay.textContent = userEmail;
     if (mobileUserEmailDisplay) mobileUserEmailDisplay.textContent = userEmail;
 
-    // Consultamos nuestra tabla APP_SAAS_USERS para obtener el plan y el conteo de CVs.
-    const { data: profile, error: profileError } = await supabase
-        .from('APP_SAAS_USERS')
-        .select('subscription_plan, cv_read_count')
-        .eq('id', user.id)
-        .single();
-    
-    if (profileError) {
-        console.error("Error cargando perfil de usuario:", profileError);
-        return;
-    }
+   // Así debe quedar la primera sección:
+const { data: profile, error: profileError } = await supabase
+    .from('app_saas_users') // <--- CORREGIDO
+    .select('subscription_plan, cv_read_count')
+    // ...
+
+// Y así la segunda:
+const { data: avisos, error } = await supabase
+    .from('app_saas_avisos') // <--- CORREGIDO
+    .select('id, titulo, valido_hasta, max_cv, postulaciones_count')
+    // ...
 
     // Mostramos la información del plan.
     if (planInfoDisplay) planInfoDisplay.textContent = `${profile.subscription_plan} Plan`;
@@ -85,7 +85,7 @@ async function loadAvisos() {
         // Gracias a RLS (Row Level Security), Supabase automáticamente filtrará
         // y devolverá solo los avisos que pertenecen al usuario autenticado.
         const { data: avisos, error } = await supabase
-            .from('APP_SAAS_AVISOS')
+    .from('app_saas_avisos') // <-- ASÍ DEBE QUEDAR
             .select('id, titulo, valido_hasta, max_cv, postulaciones_count')
             .order('created_at', { ascending: false });
 

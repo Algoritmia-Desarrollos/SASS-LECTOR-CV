@@ -133,13 +133,22 @@ generarDescripcionBtn.addEventListener('click', async () => {
 });
 
 
-// --- ENVÍO DEL FORMULARIO ---
 avisoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    successMessage.classList.add('hidden');
-    errorMessage.classList.add('hidden');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Guardando...';
+
+    // --- INICIO DE LA CORRECCIÓN ---
+
+    // 1. Obtenemos el usuario actual de la sesión.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+        alert("No se pudo identificar al usuario. Por favor, inicia sesión de nuevo.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar y Publicar';
+        return;
+    }
 
     const nuevoAviso = {
         titulo: puestoInput.value,
@@ -148,11 +157,12 @@ avisoForm.addEventListener('submit', async (e) => {
         valido_hasta: validoHastaInput.value,
         condiciones_necesarias: condicionesNecesarias,
         condiciones_deseables: condicionesDeseables,
-        // El user_id se asigna automáticamente gracias a las políticas de seguridad (RLS)
-        // y al valor por defecto que pusimos en la base de datos.
+        user_id: user.id // 2. Añadimos el ID del usuario al objeto.
     };
 
-    const { error } = await supabase.from('APP_SAAS_AVISOS').insert(nuevoAviso);
+    // --- FIN DE LA CORRECCIÓN ---
+
+    const { error } = await supabase.from('app_saas_avisos').insert(nuevoAviso);
 
     if (error) {
         console.error('Error al guardar el aviso:', error);
@@ -164,7 +174,7 @@ avisoForm.addEventListener('submit', async (e) => {
     }
 
     successMessage.classList.remove('hidden');
-    
+
     setTimeout(() => {
         window.location.href = 'lista-avisos.html';
     }, 2000);
