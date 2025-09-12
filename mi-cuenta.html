@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Cuenta - Selecta CV</title>
+  <script type="module" src="./cuenta.js"></script>
+  <script type="module" src="./supabaseClient.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <div id="navbar-placeholder"></div>
+
+  <main class="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-2xl">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Mi Cuenta</h1>
+
+    <!-- Info Usuario -->
+    <div class="space-y-4">
+      <div>
+        <p class="text-sm font-semibold text-gray-600">Correo</p>
+        <p id="cuenta-email" class="text-lg text-gray-800">cargando...</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-600">Plan</p>
+        <p id="cuenta-plan" class="text-lg text-indigo-600">cargando...</p>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="mt-8 flex space-x-4">
+      <a href="cambiar-plan.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700">Cambiar Plan</a>
+      <button id="logout-btn" class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600">Cerrar Sesión</button>
+    </div>
+  </main>
+</body>
+</html>

@@ -153,10 +153,11 @@ async function handleLogout() {
 }
 
 
-// --- LISTENERS DE EVENTOS ---
-logoutBtn.addEventListener('click', handleLogout);
-mobileLogoutBtn.addEventListener('click', handleLogout);
+if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+if (mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', handleLogout);
 
-mobileMenuBtn.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
-});
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+}
