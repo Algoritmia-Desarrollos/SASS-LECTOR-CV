@@ -58,8 +58,9 @@ async function cargarDatosDeAviso(avisoId) {
     panelTitle.textContent = `Postulantes para: ${aviso.titulo}`;
     detailsLinkBtn.href = `detalles-aviso.html?id=${aviso.id}`;
 
+    // Ya no necesitamos disparar el análisis desde aquí, solo cargar y suscribirnos.
     await cargarPostulantes(avisoId);
-    await analizarPostulantesPendientes();
+    suscribirseACambios();
 }
 
 async function cargarPostulantes(avisoId) {
@@ -80,27 +81,17 @@ async function cargarPostulantes(avisoId) {
     
     postulacionesCache = data || [];
     applyFiltersAndSort();
-    processingStatus.textContent = "";
-}
-
-async function analizarPostulantesPendientes() {
-    const pendientes = postulacionesCache.filter(p => p.calificacion === null);
-    if (pendientes.length === 0) return;
-
-    processingStatus.textContent = `Analizando ${pendientes.length} nuevos CVs...`;
-
-    const { error } = await supabase.functions.invoke('process-new-postulaciones', {
-        body: { postulaciones: pendientes.map(p => p.id) }
-    });
-
-    if (error) {
-        console.error("Error al iniciar el análisis masivo:", error);
-        processingStatus.textContent = "Error al iniciar análisis.";
+    
+    const pendientes = postulacionesCache.filter(p => p.calificacion === null).length;
+    if (pendientes > 0) {
+        processingStatus.textContent = `Análisis en progreso para ${pendientes} CVs. Los resultados aparecerán automáticamente.`;
     } else {
-        processingStatus.textContent = `Análisis iniciado para ${pendientes.length} CVs. Los resultados aparecerán automáticamente.`;
-        suscribirseACambios();
+        processingStatus.textContent = "";
     }
 }
+
+// -- ¡YA NO NECESITAMOS ESTA FUNCIÓN! --
+// async function analizarPostulantesPendientes() { ... }
 
 function applyFiltersAndSort() {
     let data = [...postulacionesCache];
