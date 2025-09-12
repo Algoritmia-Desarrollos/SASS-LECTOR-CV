@@ -2,39 +2,38 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center h-16">
 
-      <!-- Logo -->
       <div class="flex-shrink-0">
         <a href="lista-avisos.html" class="text-2xl font-bold text-gray-800">Selecta CV</a>
       </div>
 
-      <!-- Links desktop -->
       <div class="hidden md:flex md:items-center md:space-x-8">
         <a href="lista-avisos.html" id="nav-link-busquedas" class="text-gray-500 hover:text-gray-700 font-semibold">Mis Búsquedas</a>
         <a href="base-talentos.html" id="nav-link-talentos" class="text-gray-500 hover:text-gray-700 font-semibold">Base de Talentos</a>
         <a href="carga-masiva.html" id="nav-link-carga" class="text-gray-500 hover:text-gray-700 font-semibold">Carga Masiva</a>
       </div>
 
-    <div class="relative">
-  <!-- Botón perfil -->
-  <button id="user-menu-button" class="flex items-center focus:outline-none">
-    <img class="h-8 w-8 rounded-full" src="/avatar.jpg" alt="user avatar">
-  </button>
+      <div class="hidden md:flex items-center">
+        <div class="relative">
+          <button id="user-menu-button" class="flex items-center focus:outline-none">
+            <span class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <i class="fa-solid fa-user"></i>
+            </span>
+          </button>
+          <div id="user-menu" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
+            <div class="py-1">
+              <div class="px-4 py-2">
+                  <p id="user-email" class="text-sm text-gray-800 font-semibold truncate">cargando...</p>
+                  <p id="plan-info" class="text-xs text-indigo-600 font-medium"></p>
+              </div>
+              <a href="mi-cuenta.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mi Cuenta</a>
+              <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Dropdown -->
-  <div id="user-menu" 
-       class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden">
-    <div class="py-1">
-      <p class="block px-4 py-2 text-sm text-gray-700">Free Plan</p>
-      <a href="/mi-cuenta.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mi cuenta</a>
-      <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-        Cerrar sesión
-      </button>
-    </div>
-  </div>
-</div>
-
-
-      <!-- Botón menú mobile -->
       <div class="md:hidden">
         <button id="mobile-menu-btn" class="text-gray-600 hover:text-gray-800">
           <i class="fa-solid fa-bars fa-lg"></i>
@@ -43,7 +42,6 @@
     </div>
   </div>
 
-  <!-- Menú mobile -->
   <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
     <div class="px-2 pt-2 pb-3 space-y-1">
       <a href="lista-avisos.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Mis Búsquedas</a>
@@ -56,10 +54,8 @@
         <p id="mobile-plan-info" class="text-sm font-medium text-indigo-600"></p>
       </div>
       <div class="mt-3 px-2">
-        <a href="cuenta.html"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Mi cuenta</a>
-        <button id="mobile-logout-btn"
-          class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">
+        <a href="mi-cuenta.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Mi cuenta</a>
+        <button id="mobile-logout-btn" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">
           Cerrar Sesión
         </button>
       </div>
