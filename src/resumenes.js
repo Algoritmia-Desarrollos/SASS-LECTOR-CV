@@ -7,7 +7,6 @@ const panelTitle = document.getElementById('panel-title');
 const processingStatus = document.getElementById('processing-status');
 const resumenesListBody = document.getElementById('resumenes-list');
 const detailsLinkBtn = document.getElementById('details-link-btn');
-const reanalizeBtn = document.getElementById('reanalize-btn');
 const filtroInput = document.getElementById('filtro-candidatos');
 const sortSelect = document.getElementById('sort-select');
 
@@ -37,7 +36,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     await cargarDatosDeAviso(avisoId);
     
-    // Listeners de filtros y modales
     filtroInput.addEventListener('input', () => applyFiltersAndSort());
     sortSelect.addEventListener('change', () => applyFiltersAndSort());
     modalContainer.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal('modal-container')));
@@ -46,7 +44,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 
 async function cargarDatosDeAviso(avisoId) {
-    // 1. Cargar datos del aviso
     const { data: aviso, error: avisoError } = await supabase
         .from('app_saas_avisos')
         .select('*')
@@ -61,10 +58,7 @@ async function cargarDatosDeAviso(avisoId) {
     panelTitle.textContent = `Postulantes para: ${aviso.titulo}`;
     detailsLinkBtn.href = `detalles-aviso.html?id=${aviso.id}`;
 
-    // 2. Cargar las postulaciones asociadas
     await cargarPostulantes(avisoId);
-    
-    // 3. Iniciar el análisis de los CVs pendientes
     await analizarPostulantesPendientes();
 }
 
@@ -89,16 +83,12 @@ async function cargarPostulantes(avisoId) {
     processingStatus.textContent = "";
 }
 
-// --- LÓGICA DE ANÁLISIS DE IA ---
-
 async function analizarPostulantesPendientes() {
-    // Filtramos las postulaciones que nunca han sido analizadas (calificacion es null)
     const pendientes = postulacionesCache.filter(p => p.calificacion === null);
     if (pendientes.length === 0) return;
 
     processingStatus.textContent = `Analizando ${pendientes.length} nuevos CVs...`;
 
-    // Disparamos una Edge Function que se encargará del análisis en segundo plano
     const { error } = await supabase.functions.invoke('process-new-postulaciones', {
         body: { postulaciones: pendientes.map(p => p.id) }
     });
@@ -108,13 +98,9 @@ async function analizarPostulantesPendientes() {
         processingStatus.textContent = "Error al iniciar análisis.";
     } else {
         processingStatus.textContent = `Análisis iniciado para ${pendientes.length} CVs. Los resultados aparecerán automáticamente.`;
-        // Implementaremos un listener en tiempo real para recibir las actualizaciones
         suscribirseACambios();
     }
 }
-
-
-// --- RENDERIZADO Y UI ---
 
 function applyFiltersAndSort() {
     let data = [...postulacionesCache];
@@ -141,7 +127,6 @@ function applyFiltersAndSort() {
             valB = b.calificacion ?? -1;
             return sortOrder === 'asc' ? valA - valB : valB - valA;
         }
-        // Puedes añadir más ordenamientos si es necesario
         return 0;
     });
 
@@ -189,15 +174,12 @@ function crearFila(postulacion) {
         </td>
     `;
     
-    // Asignar eventos a los botones de la fila
     row.querySelector('[data-action="ver-resumen"]').addEventListener('click', () => abrirModalResumen(postulacion));
     row.querySelector('[data-action="ver-notas"]').addEventListener('click', () => abrirModalNotas(candidato.id));
     row.querySelector('[data-action="ver-cv"]').addEventListener('click', () => descargarCV(candidato.id));
 
     return row;
 }
-
-// --- MANEJO DE MODALES ---
 
 function abrirModalResumen(postulacion) {
     modalTitle.textContent = `Análisis de ${postulacion.candidato.nombre_candidato}`;
@@ -219,7 +201,7 @@ async function abrirModalNotas(candidatoId) {
     modalSaveNotesBtn.classList.remove('hidden');
 
     const { data: notas, error } = await supabase
-        .from('APP_SAAS_NOTAS')
+        .from('app_saas_notas')
         .select('*, postulacion:app_saas_postulaciones(aviso:app_saas_avisos(titulo))')
         .eq('candidato_id', candidatoId)
         .order('created_at', { ascending: false });
@@ -252,7 +234,7 @@ async function handleSaveNote() {
     
     const { data: { session } } = await supabase.auth.getSession();
 
-    const { error } = await supabase.from('APP_SAAS_NOTAS').insert({
+    const { error } = await supabase.from('app_saas_notas').insert({
         candidato_id: currentCandidatoIdParaNotas,
         postulacion_id: postulacionesCache.find(p => p.candidato.id === currentCandidatoIdParaNotas)?.id,
         user_id: session.user.id,
@@ -262,14 +244,13 @@ async function handleSaveNote() {
     if (error) {
         alert("Error al guardar la nota.");
     } else {
-        // Recargar las notas en el modal para mostrar la nueva
         abrirModalNotas(currentCandidatoIdParaNotas);
     }
 }
 
 async function descargarCV(candidatoId) {
     const { data, error } = await supabase
-        .from('APP_SAAS_CANDIDATOS')
+        .from('app_saas_candidatos')
         .select('base64_general, nombre_archivo_general')
         .eq('id', candidatoId)
         .single();
@@ -285,7 +266,6 @@ async function descargarCV(candidatoId) {
     link.click();
 }
 
-// --- ACTUALIZACIONES EN TIEMPO REAL ---
 function suscribirseACambios() {
     const changes = supabase.channel('postulaciones-changes')
       .on('postgres_changes', { 
@@ -294,13 +274,11 @@ function suscribirseACambios() {
           table: 'app_saas_postulaciones',
           filter: `aviso_id=eq.${avisoActivo.id}`
       }, (payload) => {
-          console.log('Cambio recibido!', payload.new);
-          // Actualizamos la postulación en nuestra caché
           const index = postulacionesCache.findIndex(p => p.id === payload.new.id);
           if (index !== -1) {
               postulacionesCache[index].calificacion = payload.new.calificacion;
               postulacionesCache[index].resumen = payload.new.resumen;
-              applyFiltersAndSort(); // Volvemos a renderizar la tabla con los datos actualizados
+              applyFiltersAndSort();
           }
       })
       .subscribe();
