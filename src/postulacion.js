@@ -86,17 +86,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // --- MANEJO DE ARCHIVOS (DRAG & DROP) ---
 function handleFile(file) {
-    const maxSize = 5 * 1024 * 1024;
-    const allowedTypes = [
-        'application/pdf', 
-        'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedType = 'application/pdf';
 
-    if (file && allowedTypes.includes(file.type) && file.size <= maxSize) {
+    if (file && file.type === allowedType && file.size <= maxSize) {
         selectedFile = file;
         dropZone.classList.add('border-green-500', 'bg-green-50');
-        uploadIcon.className = 'fa-solid fa-file-check text-4xl text-green-600';
+        uploadIcon.className = 'fa-solid fa-file-pdf text-4xl text-green-600';
         fileLabelText.textContent = selectedFile.name;
         uploadHint.textContent = '¡Archivo listo para enviar!';
         submitBtn.disabled = false;
@@ -106,9 +102,9 @@ function handleFile(file) {
         dropZone.classList.remove('border-green-500', 'bg-green-50');
         uploadIcon.className = 'fa-solid fa-cloud-arrow-up text-4xl text-gray-400';
         fileLabelText.textContent = 'Arrastra y suelta tu CV aquí';
-        uploadHint.textContent = 'PDF o Word, máx: 5MB';
+        uploadHint.textContent = 'Solo PDF, máx: 5MB';
         if (file) {
-            alert("Por favor, selecciona un archivo PDF o Word de menos de 5MB.");
+            alert("Por favor, selecciona un archivo PDF de menos de 5MB.");
         }
     }
 }
@@ -128,10 +124,7 @@ cvForm.addEventListener('submit', async (e) => {
     submitBtnText.textContent = 'Procesando...';
 
     try {
-        const textoCV = await extractTextFromFile(selectedFile);
-        if (!textoCV) {
-            throw new Error("No se pudo extraer texto del archivo. Puede estar vacío o corrupto.");
-        }
+        const textoCV = await extractTextFromPdf(selectedFile);
         const base64 = await fileToBase64(selectedFile);
 
         const { data: iaData, error: iaError } = await supabase.functions.invoke('openaiv2', {
@@ -209,41 +202,24 @@ function fileToBase64(file) {
     });
 }
 
-async function extractTextFromFile(file) {
-    try {
-        if (file.type === 'application/pdf') {
-            const fileArrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
-            let textoFinal = '';
+async function extractTextFromPdf(file) {
+    const fileArrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
+    let textoFinal = '';
 
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                textoFinal += textContent.items.map(item => item.str).join(' ');
-            }
-            
-            if (textoFinal.trim().length > 100) {
-                return textoFinal.trim().replace(/\x00/g, '');
-            } else {
-                console.warn("Texto de PDF corto, intentando OCR.");
-                const worker = await Tesseract.createWorker('spa');
-                const { data: { text } } = await worker.recognize(file);
-                await worker.terminate();
-                return text;
-            }
-
-        } else if (file.type.includes('msword') || file.type.includes('wordprocessingml')) {
-            const arrayBuffer = await file.arrayBuffer();
-            const result = await mammoth.extractRawText({ arrayBuffer });
-            return result.value;
-        }
-    } catch (error) {
-        if (error.message.includes('Could not find main document part')) {
-            alert("Error de Compatibilidad: Este archivo de Word (.doc) no es compatible. Por favor, ábrelo con un editor de texto y guárdalo como 'Documento de Word (.docx)' o 'PDF' e inténtalo de nuevo.");
-            throw new Error("Archivo .doc no compatible.");
-        }
-        throw error;
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        textoFinal += textContent.items.map(item => item.str).join(' ');
     }
-
-    throw new Error("Formato de archivo no soportado para extracción de texto.");
+    
+    if (textoFinal.trim().length > 100) {
+        return textoFinal.trim().replace(/\x00/g, '');
+    } else {
+        console.warn("Texto de PDF corto, intentando OCR.");
+        const worker = await Tesseract.createWorker('spa');
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+        return text;
+    }
 }

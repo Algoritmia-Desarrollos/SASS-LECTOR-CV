@@ -21,12 +21,9 @@ const modalNotasContent = document.getElementById('modal-notas-content');
 const modalNotasTextarea = document.getElementById('modal-notas-textarea');
 const modalSaveNotesBtn = document.getElementById('modal-save-notes-btn');
 const notesHistoryContainer = document.getElementById('notes-history-container');
-
-// NUEVOS SELECTORES PARA MODAL DE CONTACTO
 const contactModalContainer = document.getElementById('contact-modal-container');
 const contactModalTitle = document.getElementById('contact-modal-title');
 const contactModalBody = document.getElementById('contact-modal-body');
-
 
 // --- ESTADO ---
 let avisoActivo = null;
@@ -48,14 +45,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     await cargarDatosDeAviso(avisoId);
     
     bulkUploadBtn.addEventListener('click', handleBulkUpload);
-
     filtroInput.addEventListener('input', () => applyFiltersAndSort());
     sortSelect.addEventListener('change', () => applyFiltersAndSort());
     modalContainer.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal('modal-container')));
-    contactModalContainer.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal('contact-modal-container'))); // Cerrar nuevo modal
+    contactModalContainer.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal('contact-modal-container')));
     modalSaveNotesBtn.addEventListener('click', handleSaveNote);
 });
 
+// --- LÓGICA DE CARGA DE DATOS ---
 
 async function cargarDatosDeAviso(avisoId) {
     const { data: aviso, error: avisoError } = await supabase
@@ -77,7 +74,6 @@ async function cargarDatosDeAviso(avisoId) {
 
     const maxCv = aviso.max_cv || '∞';
     postulantesCountDisplay.innerHTML = `<strong>${aviso.postulaciones_count || 0} / ${maxCv}</strong> Postulantes`;
-
 
     await cargarPostulantes(avisoId);
     suscribirseACambios();
@@ -109,6 +105,8 @@ async function cargarPostulantes(avisoId) {
         processingStatus.textContent = "";
     }
 }
+
+// --- RENDERIZADO Y FILTRADO ---
 
 function applyFiltersAndSort() {
     let data = [...postulacionesCache];
@@ -142,7 +140,6 @@ function applyFiltersAndSort() {
 
     renderizarTabla(data);
 }
-
 
 function renderizarTabla(postulaciones) {
     resumenesListBody.innerHTML = '';
@@ -224,7 +221,7 @@ async function abrirModalNotas(candidatoId) {
 
     const { data: notas, error } = await supabase
         .from('app_saas_notas')
-        .select('*, postulacion:app_saas_postulaciones(aviso:app_saas_avisos(titulo))')
+        .select('*')
         .eq('candidato_id', candidatoId)
         .order('created_at', { ascending: false });
 
@@ -247,7 +244,6 @@ async function abrirModalNotas(candidatoId) {
     }
 }
 
-// NUEVA FUNCIÓN PARA MODAL DE CONTACTO
 function abrirModalContacto(candidato) {
     contactModalTitle.textContent = `Contacto de ${candidato.nombre_candidato}`;
     contactModalBody.innerHTML = `
@@ -263,7 +259,7 @@ function abrirModalContacto(candidato) {
     showModal('contact-modal-container');
 }
 
-// --- ACCIONES Y GUARDADO ---
+// --- LÓGICA DE ACCIONES ---
 
 async function handleSaveNote() {
     const nota = modalNotasTextarea.value.trim();
@@ -314,6 +310,7 @@ function suscribirseACambios() {
           table: 'app_saas_postulaciones',
           filter: `aviso_id=eq.${avisoActivo.id}`
       }, (payload) => {
+          console.log('Cambio recibido en tiempo real:', payload.new);
           const index = postulacionesCache.findIndex(p => p.id === payload.new.id);
           if (index !== -1) {
               postulacionesCache[index].calificacion = payload.new.calificacion;
@@ -329,7 +326,7 @@ function handleBulkUpload() {
 
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = 'application/pdf';
+    fileInput.accept = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     fileInput.multiple = true;
     
     fileInput.onchange = async (e) => {
@@ -339,11 +336,9 @@ function handleBulkUpload() {
         bulkUploadBtn.disabled = true;
         bulkUploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Procesando...`;
 
-        // --- INICIO DE LA CORRECCIÓN: PREVENIR DUPLICADOS ---
         const existingFileNames = new Set(postulacionesCache.map(p => p.candidato?.nombre_archivo_general));
         const newFiles = files.filter(file => !existingFileNames.has(file.name));
         const skippedCount = files.length - newFiles.length;
-        // --- FIN DE LA CORRECCIÓN ---
 
         processingStatus.textContent = `Procesando ${newFiles.length} archivo(s)...`;
         
@@ -379,7 +374,9 @@ function handleBulkUpload() {
 }
 
 async function processSingleFile(file) {
-    const textoCV = await extractTextFromPdf(file);
+    const textoCV = await extractTextFromFile(file);
+    if (!textoCV) throw new Error("No se pudo extraer texto.");
+    
     const base64 = await fileToBase64(file);
 
     const { data: iaData, error: iaError } = await supabase.functions.invoke('openaiv2', {
@@ -414,8 +411,6 @@ async function processSingleFile(file) {
         });
     
     if (postulaError && postulaError.code !== '23505') throw postulaError;
-
-    await supabase.rpc('increment_cv_read_count', { user_id_param: avisoActivo.user_id, increment_value: 1 });
 }
 
 // --- FUNCIONES AUXILIARES ---
@@ -429,14 +424,41 @@ function fileToBase64(file) {
     });
 }
 
-async function extractTextFromPdf(file) {
-    const fileArrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        text += textContent.items.map(item => item.str).join(' ');
+async function extractTextFromFile(file) {
+    try {
+        if (file.type === 'application/pdf') {
+            const fileArrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
+            let textoFinal = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                textoFinal += textContent.items.map(item => item.str).join(' ');
+            }
+            
+            if (textoFinal.trim().length > 100) {
+                return textoFinal.trim().replace(/\x00/g, '');
+            } else {
+                console.warn("Texto de PDF corto, intentando OCR.");
+                const worker = await Tesseract.createWorker('spa');
+                const { data: { text } } = await worker.recognize(file);
+                await worker.terminate();
+                return text;
+            }
+
+        } else if (file.type.includes('msword') || file.type.includes('wordprocessingml')) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        }
+    } catch (error) {
+        if (error.message.includes('Could not find main document part')) {
+            alert("Error de Compatibilidad: Este archivo de Word (.doc) no es compatible. Por favor, ábrelo con un editor de texto y guárdalo como 'Documento de Word (.docx)' o 'PDF' e inténtalo de nuevo.");
+            throw new Error("Archivo .doc no compatible.");
+        }
+        throw error;
     }
-    return text.trim();
+
+    throw new Error("Formato de archivo no soportado para extracción de texto.");
 }

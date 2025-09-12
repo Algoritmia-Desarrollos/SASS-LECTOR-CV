@@ -16,8 +16,7 @@ const bulkActionsContainer = document.getElementById('bulk-actions-container');
 const bulkMoveSelect = document.getElementById('bulk-move-select');
 const bulkMoveBtn = document.getElementById('bulk-move-btn');
 const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-const bulkCancelBtn = document.getElementById('bulk-cancel-btn');
-const bulkDeselectBtn = document.getElementById('bulk-deselect-btn'); // <-- AÑADIR ESTA LÍNEA
+const bulkDeselectBtn = document.getElementById('bulk-deselect-btn'); 
 
 const bulkStatusSelect = document.getElementById('bulk-status-select');
 const bulkStatusBtn = document.getElementById('bulk-status-btn');
@@ -46,6 +45,7 @@ const notesForm = document.getElementById('notes-form');
 const notesCandidateIdInput = document.getElementById('notes-candidate-id');
 const newNoteTextarea = document.getElementById('new-note-textarea');
 const notesHistoryContainer = document.getElementById('notes-history-container');
+
 
 // --- ESTADO GLOBAL ---
 let carpetasCache = [];
@@ -86,10 +86,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     bulkMoveBtn.addEventListener('click', handleBulkMove);
     bulkDeleteBtn.addEventListener('click', handleBulkDelete);
     bulkStatusBtn.addEventListener('click', handleBulkStatusChange);
-    // El listener para el nuevo botón "Deseleccionar"
     bulkDeselectBtn.addEventListener('click', () => {
         selectAllCheckbox.checked = false;
-        handleSelectAll(); // Reutilizamos la misma función
+        handleSelectAll();
     });
 
     showAddFolderFormBtn.addEventListener('click', () => toggleAddFolderForm(true));
@@ -99,7 +98,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     editForm.addEventListener('submit', handleEditFormSubmit);
     notesForm.addEventListener('submit', handleNotesFormSubmit);
 
-    // Cierres de Modales
     editModal.querySelector('#edit-modal-close')?.addEventListener('click', () => hideModal('edit-modal-container'));
     textModal.querySelector('#text-modal-close')?.addEventListener('click', () => hideModal('text-modal-container'));
     notesModal.querySelector('#notes-modal-close')?.addEventListener('click', () => hideModal('notes-modal-container'));
@@ -109,6 +107,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (allCandidatesFolder) {
         handleFolderClick('all', 'Todos los Candidatos', allCandidatesFolder);
     }
+    
+    // INICIA LA SUSCRIPCIÓN EN VIVO
+    suscribirseACambiosEnTalentos();
 });
 
 
@@ -117,7 +118,6 @@ async function loadFolders() {
     const { data: folders, error: foldersError } = await supabase.from('app_saas_carpetas').select('*').order('nombre');
     if (foldersError) { console.error("Error al cargar carpetas:", foldersError); return; }
 
-    // CORRECCIÓN: Conteo de candidatos sin RPC, directamente desde la tabla.
     const { data: allCandidates, error: candidatesError } = await supabase.from('app_saas_candidatos').select('carpeta_id');
     if(candidatesError) { console.error("Error al contar candidatos:", candidatesError); return; }
     
@@ -255,14 +255,14 @@ async function handleDrop(e) {
         const newFolderId = targetFolderId === 'none' ? null : (targetFolderId === 'all' ? draggedElement.folderId : parseInt(targetFolderId));
         if (candidateIds.length > 0) {
             const { error } = await supabase.from('app_saas_candidatos').update({ carpeta_id: newFolderId }).in('id', candidateIds);
-            if (error) { alert(`Error al mover.`); } else { await Promise.all([loadCandidates(), loadFolders()]); }
+            if (error) { alert(`Error al mover.`); }
         }
     } else if (type === 'folder') {
         const draggedFolderId = ids;
         const newParentId = targetFolderId === 'none' || targetFolderId === 'all' ? null : parseInt(targetFolderId);
         if (draggedFolderId !== targetFolderId) {
             const { error } = await supabase.from('app_saas_carpetas').update({ parent_id: newParentId }).eq('id', draggedFolderId);
-            if (error) { alert('Error al mover la carpeta.'); } else { await loadFolders(); }
+            if (error) { alert('Error al mover la carpeta.'); }
         }
     }
 }
@@ -282,7 +282,6 @@ function handleFolderClick(id, name, element) {
 async function loadCandidates() {
     talentosListBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-sm text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando candidatos...</td></tr>`;
     
-    // OPTIMIZACIÓN: Seleccionar solo las columnas necesarias para la vista de lista.
     let query = supabase.from('app_saas_candidatos').select(
         `id, nombre_candidato, email, telefono, estado, nombre_archivo_general, created_at, 
          carpeta:app_saas_carpetas(nombre), 
@@ -435,7 +434,7 @@ async function handleBulkMove() {
     const folderId = bulkMoveSelect.value === 'none' ? null : parseInt(bulkMoveSelect.value);
     if (ids.length === 0 || bulkMoveSelect.value === "") return;
     const { error } = await supabase.from('app_saas_candidatos').update({ carpeta_id: folderId }).in('id', ids);
-    if (error) { alert("Error al mover."); } else { await Promise.all([loadCandidates(), loadFolders()]); selectAllCheckbox.checked = false; handleSelectAll(); }
+    if (error) { alert("Error al mover."); } else { selectAllCheckbox.checked = false; handleSelectAll(); }
 }
 
 async function handleBulkDelete() {
@@ -443,7 +442,7 @@ async function handleBulkDelete() {
     if (ids.length === 0) return;
     if (confirm(`¿Eliminar ${ids.length} candidato(s)?`)) {
         const { error } = await supabase.from('app_saas_candidatos').delete().in('id', ids);
-        if (error) { alert("Error al eliminar."); } else { await loadCandidates(); selectAllCheckbox.checked = false; handleSelectAll(); }
+        if (error) { alert("Error al eliminar."); } else { selectAllCheckbox.checked = false; handleSelectAll(); }
     }
 }
 
@@ -453,7 +452,7 @@ async function handleBulkStatusChange() {
     if (ids.length === 0 || !status) return;
     if (status === 'limpiar') status = null;
     const { error } = await supabase.from('app_saas_candidatos').update({ estado: status }).in('id', ids);
-    if (error) { alert("Error al cambiar estado."); } else { await loadCandidates(); selectAllCheckbox.checked = false; handleSelectAll(); }
+    if (error) { alert("Error al cambiar estado."); } else { selectAllCheckbox.checked = false; handleSelectAll(); }
 }
 
 async function updateCandidateStatus(id, estado) {
@@ -498,7 +497,6 @@ async function createNewFolder() {
     } else {
         toggleAddFolderForm(false);
         newFolderNameInput.value = '';
-        await loadFolders();
     }
 }
 
@@ -558,7 +556,6 @@ async function handleEditFormSubmit(e) {
         alert("Error al actualizar.");
     } else { 
         hideModal('edit-modal-container');
-        loadCandidates(); 
     }
 }
 
@@ -592,7 +589,24 @@ async function handleNotesFormSubmit(e) {
     if (error) {
         alert("Error al guardar la nota.");
     } else {
-        openNotesModal(id); 
-        loadCandidates(); 
+        openNotesModal(id);
     }
+}
+
+// --- LÓGICA DE ACTUALIZACIONES EN VIVO ---
+function suscribirseACambiosEnTalentos() {
+    const channel = supabase.channel('public:app_saas_candidatos')
+        .on('postgres_changes', 
+            { event: '*', schema: 'public', table: 'app_saas_candidatos' }, 
+            (payload) => {
+                console.log('Cambio detectado en la base de talentos:', payload);
+                // Cuando algo cambia, recargamos las carpetas (para los contadores)
+                // y la lista de candidatos (para la tabla).
+                loadFolders();
+                loadCandidates();
+            }
+        )
+        .subscribe();
+    
+    return channel;
 }

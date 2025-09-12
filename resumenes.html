@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body class="bg-gray-100">
   <div id="navbar-placeholder"></div>
@@ -72,7 +74,7 @@
     </div>
   </main>
 
-<div id="modal-container" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div id="modal-container" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-xl rounded-xl bg-white">
       <div class="flex justify-between items-center border-b pb-3 mb-4">
         <h3 id="modal-title" class="text-2xl font-bold text-gray-900"></h3>
@@ -90,7 +92,7 @@
           <h4 class="text-sm font-semibold text-gray-600 mb-2">Historial de Notas</h4>
           <div id="notes-history-container" class="space-y-4"></div>
         </div>
-        </div>
+      </div>
       <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
         <button class="modal-close-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">Cerrar</button>
         <button id="modal-save-notes-btn" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">Guardar Nota</button>

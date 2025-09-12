@@ -11,8 +11,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
-</head>
+  </head>
 <body class="bg-gray-100">
 
     <main class="w-full max-w-2xl mx-auto py-12 px-4">
@@ -37,10 +36,10 @@
                             <i id="upload-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-gray-400"></i>
                             <span id="file-label-text" class="mt-4 font-semibold text-gray-700">Arrastra y suelta tu CV</span>
                             <span class="mt-1 text-sm text-gray-500">o haz clic para seleccionar</span>
-                            <span id="upload-hint" class="mt-4 text-xs text-gray-400">PDF o Word, máx: 5MB</span>
+                            <span id="upload-hint" class="mt-4 text-xs text-gray-400">Solo PDF, máx: 5MB</span>
                         </div>
                     </label>
-                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden">
+                    <input type="file" id="file-input" accept="application/pdf" class="hidden">
 
                     <button type="submit" id="submit-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                         <span id="submit-btn-text">Enviar Postulación</span>
