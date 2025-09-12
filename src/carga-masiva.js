@@ -1,7 +1,7 @@
 // src/carga-masiva.js
 import { supabase } from './supabaseClient.js';
 
-// --- DOM SELECTORS ---
+// --- SELECTORES DEL DOM ---
 const fileInput = document.getElementById('file-input-masivo');
 const folderSelect = document.getElementById('folder-select-masivo');
 const queueList = document.getElementById('upload-queue-list');
@@ -11,28 +11,44 @@ const clearQueueBtn = document.getElementById('clear-queue-btn');
 const linkPublicoInput = document.getElementById('link-publico');
 const copiarLinkBtn = document.getElementById('copiar-link-btn');
 const copyIconPublic = document.getElementById('copy-icon-public');
+const qrCodeContainer = document.getElementById('qr-code-container'); // Nuevo
+const openLinkBtn = document.getElementById('open-link-btn'); // Nuevo
 
-// --- APP STATE ---
+// Drag & Drop
+const dropZone = document.getElementById('drop-zone');
+const fileLabelText = document.getElementById('file-label-text');
+
+// --- ESTADO DE LA APLICACIÓN ---
 let fileQueue = [];
 let isProcessing = false;
 let userProfile = null;
 
-// --- INITIALIZATION ---
+// --- INICIALIZACIÓN ---
 window.addEventListener('DOMContentLoaded', async () => {
-    // Configurar el worker para pdf.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-    
     await loadUserProfile();
     await loadFoldersIntoSelect();
-    setupPublicLink();
+    if(userProfile) setupPublicLink();
+    setupEventListeners();
+});
 
-    fileInput.addEventListener('change', handleFileSelection);
+function setupEventListeners() {
+    fileInput.addEventListener('change', (e) => handleFileSelection(e.target.files));
     processQueueBtn.addEventListener('click', processQueue);
     clearQueueBtn.addEventListener('click', clearFinishedItems);
     copiarLinkBtn.addEventListener('click', copyPublicLink);
-});
+    openLinkBtn.addEventListener('click', openPublicLink); // Nuevo
 
-// --- CORE FUNCTIONS ---
+    // Eventos de Drag & Drop
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-indigo-500'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500');
+        handleFileSelection(e.dataTransfer.files);
+    });
+}
+
+// --- LÓGICA PRINCIPAL ---
 
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -43,14 +59,14 @@ async function loadUserProfile() {
         .single();
     if (error) {
         console.error("Error cargando perfil:", error);
-        alert("No se pudo cargar tu perfil de usuario. La página podría no funcionar correctamente.");
+        alert("No se pudo cargar tu perfil de usuario.");
     } else {
         userProfile = data;
     }
 }
 
 async function loadFoldersIntoSelect() {
-    const { data, error } = await supabase.from('APP_SAAS_CARPETAS').select('id, nombre').order('nombre');
+    const { data, error } = await supabase.from('app_saas_carpetas').select('id, nombre').order('nombre');
     if (error) return;
     folderSelect.innerHTML = '<option value="">Sin carpeta</option>';
     data.forEach(folder => {
@@ -59,25 +75,42 @@ async function loadFoldersIntoSelect() {
 }
 
 function setupPublicLink() {
-    // Para el SaaS, el link público debe identificar al usuario. Usaremos el ID de usuario.
     const publicLink = `${window.location.origin}/carga-publica.html?user=${userProfile.id}`;
     linkPublicoInput.value = publicLink;
+
+    // Generar y mostrar el QR
+    qrCodeContainer.innerHTML = '';
+    try {
+        const qr = qrcode(0, 'M');
+        qr.addData(publicLink);
+        qr.make();
+        qrCodeContainer.innerHTML = qr.createImgTag(4, 8); // Tamaño 4, margen 8px
+    } catch (error) {
+        qrCodeContainer.innerHTML = '<p class="text-xs text-red-500">Error al generar QR.</p>';
+    }
 }
 
-// --- QUEUE MANAGEMENT ---
+// --- GESTIÓN DE LA COLA ---
+// (El resto del archivo, incluyendo handleFileSelection, renderQueue, processQueue y las demás funciones, permanece sin cambios)
 
-function handleFileSelection(e) {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
-        if (!fileQueue.some(item => item.file.name === file.name)) {
+function handleFileSelection(files) {
+    const fileList = Array.from(files);
+    let addedCount = 0;
+    fileList.forEach(file => {
+        if (file.type === 'application/pdf' && !fileQueue.some(item => item.file.name === file.name)) {
             fileQueue.push({
                 id: `file-${Date.now()}-${Math.random()}`,
                 file: file,
-                status: 'pendiente', // pendiente, procesando, exito, error
+                status: 'pendiente',
                 error: null
             });
+            addedCount++;
         }
     });
+
+    if (addedCount > 0) {
+        fileLabelText.textContent = `${addedCount} archivo(s) añadido(s) a la cola.`;
+    }
     renderQueue();
 }
 
@@ -85,45 +118,23 @@ function renderQueue() {
     if (fileQueue.length === 0) {
         queueList.innerHTML = '<li class="p-4 text-center text-sm text-gray-500">La cola de carga está vacía.</li>';
     } else {
-        queueList.innerHTML = '';
-        fileQueue.forEach(item => {
+        queueList.innerHTML = fileQueue.map(item => {
             const statusInfo = getStatusInfo(item.status);
-            const li = document.createElement('li');
-            li.className = `p-3 flex items-center space-x-3 ${statusInfo.bgColor}`;
-            li.dataset.id = item.id;
-            li.innerHTML = `
-                <i class="fa-solid ${statusInfo.icon} ${statusInfo.textColor} w-5 text-center"></i>
-                <div class="flex-grow">
-                    <p class="text-sm font-medium text-gray-800">${item.file.name}</p>
-                    ${item.error ? `<p class="text-xs text-red-600">${item.error}</p>` : ''}
-                </div>
-                <span class="text-xs font-bold uppercase px-2 py-1 rounded-full ${statusInfo.badgeBg} ${statusInfo.badgeText}">${statusInfo.text}</span>
+            return `
+                <li class="p-3 flex items-center space-x-3 ${statusInfo.bgColor}" data-id="${item.id}">
+                    <i class="fa-solid ${statusInfo.icon} ${statusInfo.textColor} w-5 text-center"></i>
+                    <div class="flex-grow min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">${item.file.name}</p>
+                        ${item.error ? `<p class="text-xs text-red-600">${item.error}</p>` : ''}
+                    </div>
+                    <span class="text-xs font-bold uppercase px-2 py-1 rounded-full ${statusInfo.badgeBg} ${statusInfo.badgeText}">${statusInfo.text}</span>
+                </li>
             `;
-            queueList.appendChild(li);
-        });
+        }).join('');
     }
     const hasPending = fileQueue.some(item => item.status === 'pendiente');
     processQueueBtn.disabled = !hasPending || isProcessing;
 }
-
-function updateQueueItemUI(id, status, errorMsg = null) {
-    const li = queueList.querySelector(`[data-id="${id}"]`);
-    if (!li) return;
-
-    const item = fileQueue.find(i => i.id === id);
-    if (item) {
-        item.status = status;
-        item.error = errorMsg;
-    }
-    renderQueue(); // Re-renderizar toda la cola para simplicidad
-}
-
-function clearFinishedItems() {
-    fileQueue = fileQueue.filter(item => item.status === 'pendiente' || item.status === 'procesando');
-    renderQueue();
-}
-
-
 
 async function processQueue() {
     isProcessing = true;
@@ -131,45 +142,39 @@ async function processQueue() {
     processBtnText.textContent = 'Procesando...';
 
     const itemsToProcess = fileQueue.filter(item => item.status === 'pendiente');
-    
+
     for (const item of itemsToProcess) {
-        // **VERIFICACIÓN DE LÍMITE DEL PLAN ACTUALIZADA**
         if (userProfile.subscription_plan === 'free' && userProfile.cv_read_count >= 100) {
             const errorMsg = "Límite del plan gratuito (100 CVs) alcanzado.";
-            updateQueueItemUI(item.id, 'error', errorMsg);
-            
-            // ¡NUEVA ACCIÓN! Redirigir a la página de planes.
+            updateQueueItemStatus(item.id, 'error', errorMsg);
             alert(errorMsg + " Serás redirigido para actualizar tu plan.");
             window.location.href = '/planes.html';
-            
-            // Detenemos el procesamiento por completo.
             isProcessing = false;
             renderQueue();
             return; 
         }
 
-        updateQueueItemUI(item.id, 'procesando');
+        updateQueueItemStatus(item.id, 'procesando');
         try {
             const textoCV = await extractTextFromPdf(item.file);
             const base64 = await fileToBase64(item.file);
-            
+
             const { data: iaData, error: iaError } = await supabase.functions.invoke('openaiv2', {
                 body: { query: `Extrae nombre, email y teléfono del CV. Responde solo con JSON. CV: """${textoCV.substring(0, 4000)}"""` },
             });
             if (iaError) throw new Error('Error de análisis IA');
             const extractedData = JSON.parse(iaData.message);
-            
+
             await procesarCandidato(extractedData, base64, textoCV, item.file.name);
 
-            // Incrementar contador en la base de datos y localmente
             await supabase.rpc('increment_cv_read_count', { user_id_param: userProfile.id, increment_value: 1 });
             userProfile.cv_read_count++;
 
-            updateQueueItemUI(item.id, 'exito');
+            updateQueueItemStatus(item.id, 'exito');
 
         } catch (error) {
             console.error(`Fallo en ${item.file.name}:`, error);
-            updateQueueItemUI(item.id, 'error', error.message);
+            updateQueueItemStatus(item.id, 'error', error.message);
         }
     }
 
@@ -177,11 +182,6 @@ async function processQueue() {
     processBtnText.textContent = 'Iniciar Carga';
     renderQueue();
 }
-
-
-
-
-
 
 async function procesarCandidato(iaData, base64, textoCV, nombreArchivo) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -201,7 +201,20 @@ async function procesarCandidato(iaData, base64, textoCV, nombreArchivo) {
     if (error) throw new Error(`Error en BD: ${error.message}`);
 }
 
-// --- HELPER FUNCTIONS ---
+
+function updateQueueItemStatus(id, status, errorMsg = null) {
+    const item = fileQueue.find(i => i.id === id);
+    if (item) {
+        item.status = status;
+        item.error = errorMsg;
+    }
+    renderQueue();
+}
+
+function clearFinishedItems() {
+    fileQueue = fileQueue.filter(item => item.status === 'pendiente' || item.status === 'procesando');
+    renderQueue();
+}
 
 function getStatusInfo(status) {
     switch (status) {
@@ -215,9 +228,15 @@ function getStatusInfo(status) {
 
 function copyPublicLink() {
     navigator.clipboard.writeText(linkPublicoInput.value).then(() => {
-        copyIconPublic.className = 'fa-solid fa-check';
+        copyIconPublic.className = 'fa-solid fa-check text-green-500';
         setTimeout(() => { copyIconPublic.className = 'fa-solid fa-copy'; }, 2000);
     });
+}
+
+function openPublicLink() {
+    if(linkPublicoInput.value) {
+        window.open(linkPublicoInput.value, '_blank');
+    }
 }
 
 function fileToBase64(file) {
@@ -230,6 +249,8 @@ function fileToBase64(file) {
 }
 
 async function extractTextFromPdf(file) {
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
     const fileArrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
     let text = '';

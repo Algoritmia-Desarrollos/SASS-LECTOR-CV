@@ -1,0 +1,49 @@
+<nav class="bg-white shadow-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex-shrink-0">
+        <a href="lista-avisos.html" class="text-2xl font-bold text-gray-800">Selecta CV</a>
+      </div>
+
+      <div class="hidden md:flex md:items-center md:space-x-8">
+        <a href="lista-avisos.html" id="nav-link-busquedas" class="text-gray-500 hover:text-gray-700 font-semibold">Mis Búsquedas</a>
+        <a href="base-talentos.html" id="nav-link-talentos" class="text-gray-500 hover:text-gray-700 font-semibold">Base de Talentos</a>
+        <a href="carga-masiva.html" id="nav-link-carga" class="text-gray-500 hover:text-gray-700 font-semibold">Carga Masiva</a>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-4">
+          <div class="text-right">
+              <p id="user-email" class="text-sm text-gray-600 font-medium">cargando...</p>
+              <p id="plan-info" class="text-xs text-indigo-600 font-bold uppercase"></p>
+          </div>
+          <button id="logout-btn" title="Cerrar Sesión" class="text-gray-500 hover:text-red-600 p-2 rounded-full">
+              <i class="fa-solid fa-right-from-bracket fa-lg"></i>
+          </button>
+      </div>
+
+      <div class="md:hidden">
+          <button id="mobile-menu-btn" class="text-gray-600 hover:text-gray-800">
+              <i class="fa-solid fa-bars fa-lg"></i>
+          </button>
+      </div>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
+      <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="lista-avisos.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Mis Búsquedas</a>
+          <a href="base-talentos.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Base de Talentos</a>
+          <a href="carga-masiva.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50">Carga Masiva</a>
+      </div>
+      <div class="pt-4 pb-3 border-t border-gray-200">
+          <div class="px-5">
+              <p id="mobile-user-email" class="text-base font-medium text-gray-800">cargando...</p>
+              <p id="mobile-plan-info" class="text-sm font-medium text-indigo-600"></p>
+          </div>
+          <div class="mt-3 px-2">
+              <button id="mobile-logout-btn" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-red-50 hover:text-red-700">
+                  Cerrar Sesión
+              </button>
+          </div>
+      </div>
+  </div>
+</nav>

@@ -50,17 +50,17 @@ async function loadUserInfo() {
     if (userEmailDisplay) userEmailDisplay.textContent = userEmail;
     if (mobileUserEmailDisplay) mobileUserEmailDisplay.textContent = userEmail;
 
-   // Así debe quedar la primera sección:
-const { data: profile, error: profileError } = await supabase
-    .from('app_saas_users') // <--- CORREGIDO
-    .select('subscription_plan, cv_read_count')
-    // ...
-
-// Y así la segunda:
-const { data: avisos, error } = await supabase
-    .from('app_saas_avisos') // <--- CORREGIDO
-    .select('id, titulo, valido_hasta, max_cv, postulaciones_count')
-    // ...
+    // Consultamos nuestra tabla app_saas_users para obtener el plan y el conteo de CVs.
+    const { data: profile, error: profileError } = await supabase
+        .from('app_saas_users')
+        .select('subscription_plan, cv_read_count')
+        .eq('id', user.id)
+        .single();
+    
+    if (profileError) {
+        console.error("Error cargando perfil de usuario:", profileError);
+        return;
+    }
 
     // Mostramos la información del plan.
     if (planInfoDisplay) planInfoDisplay.textContent = `${profile.subscription_plan} Plan`;
@@ -74,6 +74,7 @@ const { data: avisos, error } = await supabase
     }
 }
 
+
 /**
  * Obtiene los avisos del usuario actual desde Supabase y los muestra en la tabla.
  */
@@ -81,12 +82,10 @@ async function loadAvisos() {
     if (!avisoListBody) return;
 
     try {
-        // Hacemos la consulta a la nueva tabla app_saas_avisos.
-        // Gracias a RLS (Row Level Security), Supabase automáticamente filtrará
-        // y devolverá solo los avisos que pertenecen al usuario autenticado.
+        // 1. Añadimos 'created_at' a la consulta
         const { data: avisos, error } = await supabase
-    .from('app_saas_avisos') // <-- ASÍ DEBE QUEDAR
-            .select('id, titulo, valido_hasta, max_cv, postulaciones_count')
+            .from('app_saas_avisos')
+            .select('id, titulo, valido_hasta, max_cv, postulaciones_count, created_at')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -94,18 +93,15 @@ async function loadAvisos() {
 
     } catch (error) {
         console.error("Error al cargar los avisos:", error);
-        avisoListBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500">Error al cargar los avisos.</td></tr>`;
+        avisoListBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-500">Error al cargar los avisos.</td></tr>`;
     }
 }
 
-/**
- * Dibuja las filas de la tabla con los datos de los avisos.
- */
 function renderizarTabla(avisos) {
     if (!avisos || avisos.length === 0) {
         avisoListBody.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center py-10">
+                <td colspan="5" class="text-center py-10">
                     <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
                     <h3 class="mt-2 text-lg font-medium text-gray-900">Aún no has creado ninguna búsqueda</h3>
                     <p class="mt-1 text-sm text-gray-500">¡Crea tu primer aviso para empezar a reclutar!</p>
@@ -117,9 +113,9 @@ function renderizarTabla(avisos) {
 
     avisoListBody.innerHTML = '';
     avisos.forEach(aviso => {
-        const validoHasta = new Date(aviso.valido_hasta).toLocaleDateString('es-AR', {
-            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
-        });
+        // 2. Formateamos ambas fechas
+        const creadoEl = new Date(aviso.created_at).toLocaleDateString('es-AR');
+        const validoHasta = new Date(aviso.valido_hasta).toLocaleDateString('es-AR');
 
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50';
@@ -131,15 +127,17 @@ function renderizarTabla(avisos) {
                 <span class="text-sm text-gray-800 font-medium">${aviso.postulaciones_count || 0}</span>
                 <span class="text-sm text-gray-500">/ ${aviso.max_cv || '∞'}</span>
             </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${creadoEl}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${validoHasta}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                <a href="resumenes.html?avisoId=${aviso.id}" class="text-indigo-600 hover:text-indigo-900">Postulantes</a>
-                <a href="detalles-aviso.html?id=${aviso.id}" class="text-gray-500 hover:text-gray-800">Detalles</a>
+                <a href="resumenes.html?avisoId=${aviso.id}" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Postulantes</a>
+                <a href="detalles-aviso.html?id=${aviso.id}" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Detalles</a>
             </td>
         `;
         avisoListBody.appendChild(row);
     });
 }
+
 
 /**
  * Cierra la sesión del usuario y lo redirige al login.

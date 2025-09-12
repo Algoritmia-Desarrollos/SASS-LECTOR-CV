@@ -1,6 +1,5 @@
 // src/detalles-aviso.js
 import { supabase } from './supabaseClient.js';
-import { showModal, hideModal } from './utils.js'; // Importamos nuestras funciones de utilidad
 
 // --- SELECTORES DEL DOM ---
 const avisoTitulo = document.getElementById('aviso-titulo');
@@ -8,21 +7,25 @@ const avisoDescripcion = document.getElementById('aviso-descripcion');
 const necesariasList = document.getElementById('necesarias-list');
 const deseablesList = document.getElementById('deseables-list');
 const avisoIdSpan = document.getElementById('aviso-id');
-const avisoMaxCvSpan = document.getElementById('aviso-max-cv');
+const avisoMaxCvSpan2 = document.getElementById('aviso-max-cv-2');
 const avisoValidoHastaSpan = document.getElementById('aviso-valido-hasta');
 const linkPostulanteInput = document.getElementById('link-postulante');
 const copiarLinkBtn = document.getElementById('copiar-link-btn');
 const copyIcon = document.getElementById('copy-icon');
-const postulantesHeader = document.getElementById('postulantes-header');
+const postulantesCountSpan = document.getElementById('postulaciones-count');
 const verPostuladosBtn = document.getElementById('ver-postulados-btn');
 const deleteAvisoBtn = document.getElementById('delete-aviso-btn');
+const qrCodeContainer = document.getElementById('qr-code-container');
+const openLinkBtn = document.getElementById('open-link-btn');
+const addFromBaseBtn = document.getElementById('add-from-base-btn');
+const addFromAvisoBtn = document.getElementById('add-from-aviso-btn');
+
 
 // --- ESTADO ---
 let avisoActivo = null;
 
 // --- LÓGICA PRINCIPAL ---
 window.addEventListener('DOMContentLoaded', async () => {
-    // Obtenemos el ID del aviso desde la URL (ej: detalles-aviso.html?id=123)
     const params = new URLSearchParams(window.location.search);
     const avisoId = params.get('id');
 
@@ -38,14 +41,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function loadAvisoDetails(id) {
     const { data, error } = await supabase
-        .from('app_saas_avisos') // <-- ASÍ DEBE QUEDAR
+        .from('app_saas_avisos')
         .select('*')
         .eq('id', id)
-        .single(); // Usamos single() porque esperamos un solo resultado
+        .single();
 
     if (error) {
         console.error('Error cargando detalles del aviso:', error);
-        document.body.innerHTML = `<div class="text-center p-10"><h1>Error</h1><p>No se pudo cargar el aviso. Es posible que haya sido eliminado o no tengas permiso para verlo.</p><a href="lista-avisos.html" class="text-indigo-600">Volver</a></div>`;
+        document.body.innerHTML = `<div class="text-center p-10"><h1>Error</h1><p>No se pudo cargar el aviso.</p><a href="lista-avisos.html" class="text-indigo-600">Volver</a></div>`;
         return;
     }
 
@@ -61,15 +64,21 @@ function populateUI(aviso) {
     renderCondiciones(deseablesList, aviso.condiciones_deseables, 'No se especificaron condiciones deseables.');
     
     avisoIdSpan.textContent = aviso.id;
-    avisoMaxCvSpan.textContent = aviso.max_cv || 'Ilimitados';
+    avisoMaxCvSpan2.textContent = aviso.max_cv || 'Ilimitados';
     avisoValidoHastaSpan.textContent = new Date(aviso.valido_hasta).toLocaleDateString('es-AR', { timeZone: 'UTC' });
     
-    // Generamos el link público para los candidatos
     const publicLink = `${window.location.origin}/postulacion.html?avisoId=${aviso.id}`;
     linkPostulanteInput.value = publicLink;
 
-    postulantesHeader.textContent = `Ver Postulados (${aviso.postulaciones_count || 0})`;
+    postulantesCountSpan.textContent = aviso.postulaciones_count || 0;
     verPostuladosBtn.href = `resumenes.html?avisoId=${aviso.id}`;
+
+    // --- LÓGICA DEL QR ---
+    qrCodeContainer.innerHTML = '';
+    const qr = qrcode(0, 'M');
+    qr.addData(publicLink);
+    qr.make();
+    qrCodeContainer.innerHTML = qr.createImgTag(4, 16); // Tamaño 4, margen 16px
 }
 
 function renderCondiciones(listElement, condiciones, emptyMessage) {
@@ -101,13 +110,17 @@ copiarLinkBtn.addEventListener('click', () => {
     });
 });
 
+openLinkBtn.addEventListener('click', () => {
+    if (linkPostulanteInput.value) {
+        window.open(linkPostulanteInput.value, '_blank');
+    }
+});
+
 deleteAvisoBtn.addEventListener('click', async () => {
     if (!avisoActivo) return;
 
-    if (confirm(`¿Estás seguro de que quieres eliminar permanentemente el aviso "${avisoActivo.titulo}" y todas sus postulaciones? Esta acción no se puede deshacer.`)) {
-        deleteAvisoBtn.disabled = true;
-        deleteAvisoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Eliminando...';
-
+    if (confirm(`¿Estás seguro de que quieres eliminar el aviso "${avisoActivo.titulo}"?`)) {
+        // Lógica de eliminación...
         const { error } = await supabase
             .from('app_saas_avisos')
             .delete()
@@ -115,8 +128,6 @@ deleteAvisoBtn.addEventListener('click', async () => {
 
         if (error) {
             alert('Error al eliminar el aviso.');
-            deleteAvisoBtn.disabled = false;
-            deleteAvisoBtn.innerHTML = '<i class="fa-solid fa-trash mr-2"></i> Eliminar';
         } else {
             alert('Aviso eliminado correctamente.');
             window.location.href = 'lista-avisos.html';
@@ -124,9 +135,11 @@ deleteAvisoBtn.addEventListener('click', async () => {
     }
 });
 
-// Por ahora, el botón de editar simplemente mostrará una alerta.
-// En un paso futuro, implementaremos el modal completo.
-document.getElementById('edit-aviso-btn').addEventListener('click', () => {
-    alert("La funcionalidad de edición se implementará en un próximo paso.");
-    // Aquí es donde llamaríamos a showModal('modal-edit-aviso') y poblaríamos el formulario.
+// Botones con funcionalidad pendiente
+addFromBaseBtn.addEventListener('click', () => {
+    alert('Funcionalidad "Agregar desde Base" pendiente de implementación.');
+});
+
+addFromAvisoBtn.addEventListener('click', () => {
+    alert('Funcionalidad "Agregar desde Aviso" pendiente de implementación.');
 });

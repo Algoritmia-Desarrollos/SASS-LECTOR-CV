@@ -6,71 +6,86 @@
   <title>Carga Masiva - Selecta CV</title>
 
   <script type="module" src="src/auth-guard.js"></script>
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
 </head>
 <body class="bg-gray-100">
 
-  <nav class="bg-white shadow-md sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center h-16">
-            <a href="lista-avisos.html" class="text-2xl font-bold text-gray-800">Selecta CV</a>
-            <div class="hidden md:flex md:items-center md:space-x-8">
-              <a href="lista-avisos.html" class="text-gray-500 hover:text-gray-700 font-semibold">Mis Búsquedas</a>
-              <a href="base-talentos.html" class="text-gray-500 hover:text-gray-700 font-semibold">Base de Talentos</a>
-              <a href="carga-masiva.html" class="text-indigo-600 font-semibold border-b-2 border-indigo-500">Carga Masiva</a>
-            </div>
-          </div>
-      </div>
-  </nav>
+  <div id="navbar-placeholder"></div>
 
-  <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Cargar CVs a la Base de Talentos</h1>
-    
-    <div class="bg-white shadow-md rounded-lg p-6 md:p-8 space-y-8">
-      
-      <div>
-        <h2 class="text-xl font-semibold text-gray-800 flex items-center"><i class="fa-solid fa-share-nodes mr-3 text-indigo-500"></i> Link Público para Candidatos</h2>
-        <p class="mt-2 text-sm text-gray-600">Comparte este link para que los candidatos suban su CV directamente a tu base de datos general (sin carpeta).</p>
-        <div class="mt-4 flex">
+  <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Cargar CVs a la Base de Talentos</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+      <div class="bg-white shadow-md rounded-lg p-6 md:p-8 space-y-4">
+        <div class="flex items-center">
+            <i class="fa-solid fa-share-nodes text-2xl text-indigo-500 mr-4"></i>
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Link Público para Candidatos</h2>
+                <p class="mt-1 text-sm text-gray-600">Comparte este link o QR para que los candidatos suban su CV.</p>
+            </div>
+        </div>
+
+        <div id="qr-code-container" class="flex justify-center p-4 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-400">Generando QR...</p>
+        </div>
+
+        <div class="flex">
             <input type="text" id="link-publico" readonly class="w-full rounded-l-md border-gray-300 shadow-sm text-sm bg-gray-50">
-            <button id="copiar-link-btn" title="Copiar link" class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-r-md">
+            <button id="copiar-link-btn" title="Copiar link" class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-3 rounded-r-md">
                 <i id="copy-icon-public" class="fa-solid fa-copy"></i>
             </button>
         </div>
-      </div>
 
-      <div class="pt-8 border-t">
-        <h2 class="text-xl font-semibold text-gray-800 flex items-center"><i class="fa-solid fa-upload mr-3 text-indigo-500"></i> Carga Manual de Archivos</h2>
-        <p class="mt-2 text-sm text-gray-600">Sube uno o varios CVs en formato PDF. Los archivos se añadirán a una cola para ser procesados.</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div>
-            <label for="folder-select-masivo" class="block text-sm font-medium text-gray-700">Subir a la carpeta (opcional)</label>
-            <select id="folder-select-masivo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-              <option value="">Sin carpeta</option>
-            </select>
-          </div>
-          <div>
-            <label for="file-input-masivo" class="block text-sm font-medium text-gray-700">Seleccionar Archivos PDF</label>
-            <input type="file" id="file-input-masivo" accept="application/pdf" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-          </div>
+        <button id="open-link-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center justify-center">
+            <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>
+            Abrir Link en Pestaña Nueva
+        </button>
+      </div>
+      <div class="bg-white shadow-md rounded-lg p-6 md:p-8 space-y-6">
+        <div class="flex items-center">
+            <i class="fa-solid fa-upload text-2xl text-indigo-500 mr-4"></i>
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Carga Manual de Archivos</h2>
+                <p class="mt-1 text-sm text-gray-600">Sube uno o varios CVs en formato PDF para procesarlos.</p>
+            </div>
         </div>
 
-        <div id="upload-queue-container" class="mt-6">
-          <h3 class="text-lg font-medium text-gray-800">Cola de Carga</h3>
-          <ul id="upload-queue-list" class="mt-2 border rounded-md divide-y">
+        <div>
+           <h3 class="text-lg font-medium text-gray-800">1. Subir a la carpeta (opcional)</h3>
+           <select id="folder-select-masivo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+             <option value="">Sin carpeta</option>
+           </select>
+        </div>
+
+        <div>
+              <h3 class="text-lg font-medium text-gray-800">2. Seleccionar Archivos</h3>
+              <label for="file-input-masivo" id="drop-zone" class="flex flex-col items-center justify-center cursor-pointer bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition hover:border-indigo-500 min-h-[220px]">
+                <i id="upload-icon" class="fa-solid fa-cloud-arrow-up text-4xl text-gray-400"></i>
+                <span id="file-label-text" class="mt-4 font-semibold text-gray-700">Arrastra y suelta tus archivos aquí</span>
+                <span class="mt-1 text-sm text-gray-500">o haz clic para seleccionar</span>
+                <span id="upload-hint" class="mt-4 text-xs text-gray-400">Solo archivos PDF, múltiples archivos permitidos</span>
+            </label>
+            <input type="file" id="file-input-masivo" accept="application/pdf" multiple class="hidden">
+        </div>
+
+        <div id="upload-queue-container">
+          <h3 class="text-lg font-medium text-gray-800">3. Cola de Carga</h3>
+          <ul id="upload-queue-list" class="mt-2 border rounded-md divide-y max-h-60 overflow-y-auto">
             <li class="p-4 text-center text-sm text-gray-500">La cola de carga está vacía.</li>
           </ul>
-          <div class="mt-4 flex justify-end space-x-3">
-            <button id="clear-queue-btn" class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">Limpiar Finalizados</button>
-            <button id="process-queue-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center disabled:bg-gray-400" disabled>
-                <i class="fa-solid fa-cloud-arrow-up mr-2"></i>
+          <div class="mt-4 flex justify-between items-center">
+            <button id="clear-queue-btn" class="text-sm text-gray-600 hover:text-red-600 font-semibold">Limpiar Finalizados</button>
+            <button id="process-queue-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center disabled:bg-gray-400" disabled>
+                <i class="fa-solid fa-bolt mr-2"></i>
                 <span id="process-btn-text">Iniciar Carga</span>
             </button>
           </div>
@@ -78,7 +93,8 @@
       </div>
     </div>
   </main>
-  
+
+  <script type="module" src="src/navigation.js"></script>
   <script type="module" src="src/carga-masiva.js"></script>
 </body>
 </html>

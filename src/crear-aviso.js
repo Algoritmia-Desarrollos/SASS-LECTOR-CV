@@ -34,13 +34,14 @@ function renderizarCondiciones(listaElemento, arrayCondiciones, tipo) {
     listaElemento.innerHTML = '';
     arrayCondiciones.forEach((condicion, index) => {
         const item = document.createElement('div');
-        item.className = 'flex items-center justify-between bg-gray-100 p-2 rounded-md';
-        item.innerHTML = `
-            <span class="text-sm text-gray-800">${condicion}</span>
-            <button type="button" class="text-gray-400 hover:text-red-500" data-index="${index}" data-tipo="${tipo}">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        `;
+       item.className = 'flex items-center gap-3 bg-gray-100 px-3 py-2 rounded-md';
+item.innerHTML = `
+  <span class="text-sm text-gray-800 flex-1">${condicion}</span>
+  <button type="button" class="text-gray-400 hover:text-red-500 ml-2" data-index="${index}" data-tipo="${tipo}">
+      <i class="fa-solid fa-trash-can"></i>
+  </button>
+`;
+
         listaElemento.appendChild(item);
     });
 }
