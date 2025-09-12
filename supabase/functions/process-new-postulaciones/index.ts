@@ -43,8 +43,8 @@ async function processPostulacionesInBackground(postulacionIds, supabase) {
         try {
             // 1. Obtener los datos necesarios para el análisis
             const { data: post, error: fetchError } = await supabase
-                .from('APP_SAAS_POSTULACIONES')
-                .select('texto_cv_especifico, aviso:APP_SAAS_AVISOS(*)')
+                .from('app_saas_postulaciones')
+                .select('texto_cv_especifico, aviso:app_saas_avisos(*)')
                 .eq('id', id)
                 .single();
             if (fetchError) throw fetchError;
@@ -68,7 +68,7 @@ async function processPostulacionesInBackground(postulacionIds, supabase) {
 
             // 4. Actualizar la postulación con el resultado
             await supabase
-                .from('APP_SAAS_POSTULACIONES')
+                .from('app_saas_postulaciones')
                 .update({ 
                     calificacion: iaResult.calificacion, 
                     resumen: iaResult.resumen 
@@ -79,7 +79,7 @@ async function processPostulacionesInBackground(postulacionIds, supabase) {
             console.error(`Error procesando postulación ${id}:`, error.message);
             // Marcar como error para que el usuario sepa que algo salió mal
             await supabase
-                .from('APP_SAAS_POSTULACIONES')
+                .from('app_saas_postulaciones')
                 .update({ calificacion: -1, resumen: `Error de análisis: ${error.message}` })
                 .eq('id', id);
         }

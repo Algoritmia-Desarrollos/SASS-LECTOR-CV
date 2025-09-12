@@ -48,7 +48,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function cargarDatosDeAviso(avisoId) {
     // 1. Cargar datos del aviso
     const { data: aviso, error: avisoError } = await supabase
-        .from('APP_SAAS_AVISOS')
+        .from('app_saas_avisos')
         .select('*')
         .eq('id', avisoId)
         .single();
@@ -71,10 +71,10 @@ async function cargarDatosDeAviso(avisoId) {
 async function cargarPostulantes(avisoId) {
     processingStatus.textContent = "Cargando postulantes...";
     const { data, error } = await supabase
-        .from('APP_SAAS_POSTULACIONES')
+        .from('app_saas_postulaciones')
         .select(`
             id, calificacion, resumen,
-            candidato:APP_SAAS_CANDIDATOS (id, nombre_candidato, email, telefono, nombre_archivo_general)
+            candidato:app_saas_candidatos (id, nombre_candidato, email, telefono, nombre_archivo_general)
         `)
         .eq('aviso_id', avisoId);
 
@@ -220,7 +220,7 @@ async function abrirModalNotas(candidatoId) {
 
     const { data: notas, error } = await supabase
         .from('APP_SAAS_NOTAS')
-        .select('*, postulacion:APP_SAAS_POSTULACIONES(aviso:APP_SAAS_AVISOS(titulo))')
+        .select('*, postulacion:app_saas_postulaciones(aviso:app_saas_avisos(titulo))')
         .eq('candidato_id', candidatoId)
         .order('created_at', { ascending: false });
 
@@ -291,7 +291,7 @@ function suscribirseACambios() {
       .on('postgres_changes', { 
           event: 'UPDATE', 
           schema: 'public', 
-          table: 'APP_SAAS_POSTULACIONES',
+          table: 'app_saas_postulaciones',
           filter: `aviso_id=eq.${avisoActivo.id}`
       }, (payload) => {
           console.log('Cambio recibido!', payload.new);

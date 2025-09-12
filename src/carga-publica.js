@@ -51,7 +51,7 @@ cvForm.addEventListener('submit', async (e) => {
         
         // La única diferencia es que no hay postulación, solo se crea el candidato.
         const { error: upsertError } = await supabase
-            .from('APP_SAAS_CANDIDATOS')
+            .from('app_saas_candidatos')
             .upsert({
                 user_id: ownerId, // Usamos el ID de la URL
                 nombre_candidato: extractedData.nombreCompleto || `Candidato ${Date.now()}`,

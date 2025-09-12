@@ -38,7 +38,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function loadAvisoDetails(id) {
     const { data, error } = await supabase
-        .from('APP_SAAS_AVISOS')
+        .from('app_saas_avisos') // <-- ASÍ DEBE QUEDAR
         .select('*')
         .eq('id', id)
         .single(); // Usamos single() porque esperamos un solo resultado
@@ -109,7 +109,7 @@ deleteAvisoBtn.addEventListener('click', async () => {
         deleteAvisoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Eliminando...';
 
         const { error } = await supabase
-            .from('APP_SAAS_AVISOS')
+            .from('app_saas_avisos')
             .delete()
             .eq('id', avisoActivo.id);
 

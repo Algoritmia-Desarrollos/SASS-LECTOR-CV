@@ -41,7 +41,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function loadFolders() {
     // RLS se asegura de que solo obtengamos las carpetas del usuario actual.
-    const { data, error } = await supabase.from('APP_SAAS_CARPETAS').select('*').order('nombre');
+    const { data, error } = await supabase.from('app_saas_carpetas').select('*').order('nombre');
     if (error) {
         console.error("Error al cargar carpetas:", error);
         return;
@@ -84,7 +84,7 @@ async function createNewFolder() {
     const name = newFolderNameInput.value.trim();
     if (!name) return;
 
-    const { error } = await supabase.from('APP_SAAS_CARPETAS').insert({ nombre: name });
+    const { error } = await supabase.from('app_saas_carpetas').insert({ nombre: name });
     if (error) {
         alert("Error al crear la carpeta.");
     } else {
@@ -99,8 +99,8 @@ async function createNewFolder() {
 async function loadAllCandidates() {
     // RLS se asegura de que solo obtengamos los candidatos del usuario actual.
     const { data, error } = await supabase
-        .from('APP_SAAS_CANDIDATOS')
-        .select(`*, carpeta:APP_SAAS_CARPETAS(nombre)`)
+        .from('app_saas_candidatos')
+        .select(`*, carpeta:app_saas_carpetas(nombre)`)
         .order('created_at', { ascending: false });
         
     if (error) {
@@ -178,8 +178,8 @@ async function abrirModalNotas(candidatoId) {
     showModal('modal-container');
 
     const { data: notas, error } = await supabase
-        .from('APP_SAAS_NOTAS')
-        .select('*, postulacion:APP_SAAS_POSTULACIONES(aviso:APP_SAAS_AVISOS(titulo))')
+        .from('app_saas_notas')
+        .select('*, postulacion:app_saas_postulaciones(aviso:app_saas_avisos(titulo))')
         .eq('candidato_id', candidatoId)
         .order('created_at', { ascending: false });
 
@@ -205,7 +205,7 @@ async function abrirModalNotas(candidatoId) {
 
 async function descargarCV(candidatoId) {
     const { data, error } = await supabase
-        .from('APP_SAAS_CANDIDATOS')
+        .from('app_saas_candidatos')
         .select('base64_general, nombre_archivo_general')
         .eq('id', candidatoId)
         .single();

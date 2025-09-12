@@ -81,7 +81,7 @@ async function loadAvisos() {
     if (!avisoListBody) return;
 
     try {
-        // Hacemos la consulta a la nueva tabla APP_SAAS_AVISOS.
+        // Hacemos la consulta a la nueva tabla app_saas_avisos.
         // Gracias a RLS (Row Level Security), Supabase automáticamente filtrará
         // y devolverá solo los avisos que pertenecen al usuario autenticado.
         const { data: avisos, error } = await supabase

@@ -37,7 +37,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase
-        .from('APP_SAAS_USERS')
+        .from('app_saas_users')
         .select('id, subscription_plan, cv_read_count')
         .eq('id', session.user.id)
         .single();
@@ -186,7 +186,7 @@ async function processQueue() {
 async function procesarCandidato(iaData, base64, textoCV, nombreArchivo) {
     const { data: { session } } = await supabase.auth.getSession();
     const { error } = await supabase
-        .from('APP_SAAS_CANDIDATOS')
+        .from('app_saas_candidatos')
         .upsert({
             user_id: session.user.id,
             nombre_candidato: iaData.nombreCompleto || `Candidato ${Date.now()}`,

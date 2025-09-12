@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     // 1. Buscamos el aviso en la base de datos
     const { data: aviso, error } = await supabase
-        .from('APP_SAAS_AVISOS')
+        .from('app_saas_avisos')
         .select('id, user_id, titulo, valido_hasta, max_cv, postulaciones_count')
         .eq('id', avisoId)
         .single();
@@ -66,7 +66,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     // 3. Verificamos si el dueño del aviso puede recibir más CVs (límite de su plan)
     const { data: ownerProfile, error: profileError } = await supabase
-        .from('APP_SAAS_USERS')
+        .from('app_saas_users')
         .select('subscription_plan, cv_read_count')
         .eq('id', aviso.user_id)
         .single();
@@ -142,7 +142,7 @@ cvForm.addEventListener('submit', async (e) => {
         
         // 3. Crear o actualizar el candidato en la base de talentos del usuario
         const { data: candidato, error: upsertError } = await supabase
-            .from('APP_SAAS_CANDIDATOS')
+            .from('app_saas_candidatos')
             .upsert({
                 user_id: avisoActivo.user_id,
                 nombre_candidato: extractedData.nombreCompleto || `Candidato ${Date.now()}`,
@@ -161,7 +161,7 @@ cvForm.addEventListener('submit', async (e) => {
         
         // 4. Crear la postulación
         const { error: postulaError } = await supabase
-            .from('APP_SAAS_POSTULACIONES')
+            .from('app_saas_postulaciones')
             .insert({
                 candidato_id: candidato.id,
                 aviso_id: avisoActivo.id,
