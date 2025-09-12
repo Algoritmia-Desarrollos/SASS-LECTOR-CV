@@ -219,7 +219,7 @@ async function abrirModalNotas(candidatoId) {
     modalSaveNotesBtn.classList.remove('hidden');
 
     const { data: notas, error } = await supabase
-        .from('app_saas_notas')
+        .from('APP_SAAS_NOTAS')
         .select('*, postulacion:app_saas_postulaciones(aviso:app_saas_avisos(titulo))')
         .eq('candidato_id', candidatoId)
         .order('created_at', { ascending: false });
@@ -252,7 +252,7 @@ async function handleSaveNote() {
     
     const { data: { session } } = await supabase.auth.getSession();
 
-    const { error } = await supabase.from('app_saas_notas').insert({
+    const { error } = await supabase.from('APP_SAAS_NOTAS').insert({
         candidato_id: currentCandidatoIdParaNotas,
         postulacion_id: postulacionesCache.find(p => p.candidato.id === currentCandidatoIdParaNotas)?.id,
         user_id: session.user.id,
@@ -269,7 +269,7 @@ async function handleSaveNote() {
 
 async function descargarCV(candidatoId) {
     const { data, error } = await supabase
-        .from('app_saas_candidatos')
+        .from('APP_SAAS_CANDIDATOS')
         .select('base64_general, nombre_archivo_general')
         .eq('id', candidatoId)
         .single();
