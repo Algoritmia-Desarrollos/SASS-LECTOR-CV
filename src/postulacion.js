@@ -26,7 +26,6 @@ let selectedFile = null;
 
 // --- INICIALIZACIÓN ---
 window.addEventListener('DOMContentLoaded', async () => {
-    // Configurar el worker para pdf.js
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
     const params = new URLSearchParams(window.location.search);
@@ -37,7 +36,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // 1. Buscamos el aviso en la base de datos
     const { data: aviso, error } = await supabase
         .from('app_saas_avisos')
         .select('id, user_id, titulo, valido_hasta, max_cv, postulaciones_count')
@@ -49,7 +47,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // 2. Verificamos si la búsqueda está activa
     const hoy = new Date();
     const fechaLimite = new Date(aviso.valido_hasta);
     hoy.setHours(0,0,0,0);
@@ -64,7 +61,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // 3. Verificamos si el dueño del aviso puede recibir más CVs (límite de su plan)
     const { data: ownerProfile, error: profileError } = await supabase
         .from('app_saas_users')
         .select('subscription_plan, cv_read_count')
@@ -80,7 +76,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Si todo está OK, mostramos el formulario
     avisoActivo = aviso;
     loadingView.classList.add('hidden');
     avisoHeader.classList.remove('hidden');
@@ -91,11 +86,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // --- MANEJO DE ARCHIVOS (DRAG & DROP) ---
 function handleFile(file) {
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file && file.type === 'application/pdf' && file.size <= maxSize) {
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    if (file && allowedTypes.includes(file.type) && file.size <= maxSize) {
         selectedFile = file;
         dropZone.classList.add('border-green-500', 'bg-green-50');
-        uploadIcon.className = 'fa-solid fa-file-pdf text-4xl text-green-600';
+        uploadIcon.className = 'fa-solid fa-file-check text-4xl text-green-600';
         fileLabelText.textContent = selectedFile.name;
         uploadHint.textContent = '¡Archivo listo para enviar!';
         submitBtn.disabled = false;
@@ -105,9 +106,9 @@ function handleFile(file) {
         dropZone.classList.remove('border-green-500', 'bg-green-50');
         uploadIcon.className = 'fa-solid fa-cloud-arrow-up text-4xl text-gray-400';
         fileLabelText.textContent = 'Arrastra y suelta tu CV aquí';
-        uploadHint.textContent = 'Solo archivos PDF, tamaño máximo: 5MB';
+        uploadHint.textContent = 'PDF o Word, máx: 5MB';
         if (file) {
-            alert("Por favor, selecciona un archivo PDF de menos de 5MB.");
+            alert("Por favor, selecciona un archivo PDF o Word de menos de 5MB.");
         }
     }
 }
@@ -127,11 +128,12 @@ cvForm.addEventListener('submit', async (e) => {
     submitBtnText.textContent = 'Procesando...';
 
     try {
-        // 1. Extraer texto y convertir a base64
-        const textoCV = await extractTextFromPdf(selectedFile);
+        const textoCV = await extractTextFromFile(selectedFile);
+        if (!textoCV) {
+            throw new Error("No se pudo extraer texto del archivo. Puede estar vacío o corrupto.");
+        }
         const base64 = await fileToBase64(selectedFile);
 
-        // 2. Llamar a la Edge Function para extraer datos con IA
         const { data: iaData, error: iaError } = await supabase.functions.invoke('openaiv2', {
             body: { 
                 query: `Extrae nombre completo, email y teléfono del siguiente CV. Responde solo con un JSON con claves "nombreCompleto", "email", "telefono". CV: """${textoCV.substring(0, 4000)}"""`
@@ -140,7 +142,6 @@ cvForm.addEventListener('submit', async (e) => {
         if (iaError) throw new Error('Error de análisis IA');
         const extractedData = JSON.parse(iaData.message);
         
-        // 3. Crear o actualizar el candidato en la base de talentos del usuario
         const { data: candidato, error: upsertError } = await supabase
             .from('app_saas_candidatos')
             .upsert({
@@ -152,14 +153,13 @@ cvForm.addEventListener('submit', async (e) => {
                 texto_cv_general: textoCV,
                 nombre_archivo_general: selectedFile.name,
             }, {
-                onConflict: 'user_id, email', // Evita duplicados para el mismo reclutador
+                onConflict: 'user_id, email',
             })
             .select('id')
             .single();
 
         if (upsertError) throw upsertError;
         
-        // 4. Crear la postulación
         const { error: postulaError } = await supabase
             .from('app_saas_postulaciones')
             .insert({
@@ -170,15 +170,12 @@ cvForm.addEventListener('submit', async (e) => {
                 nombre_archivo_especifico: selectedFile.name
             });
         
-        // Si el candidato ya se había postulado, el error '23505' lo indicará. Lo ignoramos.
         if (postulaError && postulaError.code !== '23505') {
             throw postulaError;
         }
 
-        // 5. Incrementar el contador de CVs del reclutador (¡CLAVE DEL SAAS!)
         await supabase.rpc('increment_cv_read_count', { user_id_param: avisoActivo.user_id, increment_value: 1 });
 
-        // 6. Mostrar vista de éxito
         formView.classList.add('hidden');
         avisoHeader.classList.add('hidden');
         successView.classList.remove('hidden');
@@ -212,14 +209,41 @@ function fileToBase64(file) {
     });
 }
 
-async function extractTextFromPdf(file) {
-    const fileArrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        text += textContent.items.map(item => item.str).join(' ');
+async function extractTextFromFile(file) {
+    try {
+        if (file.type === 'application/pdf') {
+            const fileArrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(fileArrayBuffer).promise;
+            let textoFinal = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                textoFinal += textContent.items.map(item => item.str).join(' ');
+            }
+            
+            if (textoFinal.trim().length > 100) {
+                return textoFinal.trim().replace(/\x00/g, '');
+            } else {
+                console.warn("Texto de PDF corto, intentando OCR.");
+                const worker = await Tesseract.createWorker('spa');
+                const { data: { text } } = await worker.recognize(file);
+                await worker.terminate();
+                return text;
+            }
+
+        } else if (file.type.includes('msword') || file.type.includes('wordprocessingml')) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        }
+    } catch (error) {
+        if (error.message.includes('Could not find main document part')) {
+            alert("Error de Compatibilidad: Este archivo de Word (.doc) no es compatible. Por favor, ábrelo con un editor de texto y guárdalo como 'Documento de Word (.docx)' o 'PDF' e inténtalo de nuevo.");
+            throw new Error("Archivo .doc no compatible.");
+        }
+        throw error;
     }
-    return text.trim();
+
+    throw new Error("Formato de archivo no soportado para extracción de texto.");
 }

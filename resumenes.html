@@ -8,51 +8,53 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="bg-gray-100">
   <div id="navbar-placeholder"></div>
 
   <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <!-- ENCABEZADO -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
       <div>
         <h1 id="panel-title" class="text-3xl font-extrabold text-gray-900">Cargando Búsqueda...</h1>
-        <p id="processing-status" class="mt-2 text-sm text-gray-600"></p>
+        <div class="mt-2 flex flex-wrap items-center gap-4">
+            <p id="postulantes-count-display" class="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full inline-block"></p>
+            <p id="processing-status" class="text-sm text-indigo-600"></p>
+        </div>
       </div>
-      <a id="details-link-btn" href="#"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center shadow-sm text-sm">
-        <i class="fa-solid fa-circle-info mr-2"></i> Detalles del Aviso
-      </a>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <a id="public-link-btn" href="#" target="_blank"
+          class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg flex items-center shadow-sm text-sm transition-colors">
+          <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Link Público
+        </a>
+        <button id="bulk-upload-btn"
+          class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg flex items-center shadow-sm text-sm transition-colors">
+          <i class="fa-solid fa-upload mr-2"></i> Carga Masiva
+        </button>
+        <a id="details-link-btn" href="#"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center shadow-sm text-sm transition-colors">
+          <i class="fa-solid fa-circle-info mr-2"></i> Detalles
+        </a>
+      </div>
     </div>
 
-<!-- FILTROS -->
-<div class="mb-8">
-  <div class="bg-white shadow-sm rounded-xl flex items-center overflow-hidden border border-gray-200">
-    <!-- Icono de búsqueda -->
-    <span class="px-3 text-gray-400">
-      <i class="fa-solid fa-magnifying-glass"></i>
-    </span>
+    <div class="mb-8">
+      <div class="bg-white shadow-sm rounded-xl flex items-center overflow-hidden border border-gray-200">
+        <span class="px-3 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" id="filtro-candidatos"
+          class="flex-grow py-2 px-2 focus:outline-none focus:ring-0 text-gray-700 placeholder-gray-400"
+          placeholder="Buscar por nombre, email o teléfono...">
+        <div class="h-6 w-px bg-gray-200"></div>
+        <select id="sort-select"
+          class="py-2 pl-3 pr-8 bg-white text-gray-700 text-sm focus:outline-none focus:ring-0">
+          <option value="calificacion-desc" selected>Mejor Calificación</option>
+          <option value="created_at-desc">Últimos agregados</option>
+          <option value="nombre_candidato-asc">Nombre (A-Z)</option>
+          <option value="nombre_candidato-desc">Nombre (Z-A)</option>
+        </select>
+      </div>
+    </div>
 
-    <!-- Input -->
-    <input type="text" id="filtro-candidatos"
-      class="flex-grow py-2 px-2 focus:outline-none focus:ring-0 text-gray-700 placeholder-gray-400"
-      placeholder="Buscar por nombre, email o teléfono...">
-
-    <!-- Separador -->
-    <div class="h-6 w-px bg-gray-200"></div>
-
-    <!-- Select -->
-    <select id="sort-select"
-      class="py-2 pl-3 pr-8 bg-white text-gray-700 text-sm focus:outline-none focus:ring-0">
-      <option value="calificacion-desc" selected>Mejor Calificación</option>
-      <option value="created_at-desc">Últimos agregados</option>
-      <option value="nombre_candidato-asc">Nombre (A-Z)</option>
-      <option value="nombre_candidato-desc">Nombre (Z-A)</option>
-    </select>
-  </div>
-</div>
-
-    <!-- TABLA -->
     <div class="bg-white shadow-lg rounded-xl overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -65,36 +67,47 @@
           </tr>
         </thead>
         <tbody id="resumenes-list" class="bg-white divide-y divide-gray-200">
-          <tr>
-            <td colspan="5" class="text-center py-10">
-              <i class="fa-solid fa-spinner fa-spin text-2xl text-gray-400"></i>
-              <p class="mt-2 text-sm text-gray-500">Cargando postulantes...</p>
-            </td>
-          </tr>
-        </tbody>
+          </tbody>
       </table>
     </div>
   </main>
 
-  <!-- MODAL -->
-  <div id="modal-container" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+<div id="modal-container" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-xl rounded-xl bg-white">
       <div class="flex justify-between items-center border-b pb-3 mb-4">
         <h3 id="modal-title" class="text-2xl font-bold text-gray-900"></h3>
         <button class="modal-close-btn text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
       </div>
-      <div id="modal-body" class="max-h-[60vh] overflow-y-auto">
+      <div id="modal-body" class="max-h-[60vh] overflow-y-auto pr-4">
         <div id="modal-resumen-content" class="whitespace-pre-wrap text-gray-700"></div>
+        
         <div id="modal-notas-content">
-          <div id="notes-history-container" class="space-y-4 mb-4"></div>
-          <textarea id="modal-notas-textarea"
-            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            rows="4" placeholder="Escribe una nueva nota aquí..."></textarea>
+          <div class="mb-4">
+              <textarea id="modal-notas-textarea"
+                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-3"
+                rows="4" placeholder="Escribe una nueva nota aquí..."></textarea>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-600 mb-2">Historial de Notas</h4>
+          <div id="notes-history-container" class="space-y-4"></div>
         </div>
-      </div>
+        </div>
       <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
         <button class="modal-close-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">Cerrar</button>
         <button id="modal-save-notes-btn" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">Guardar Nota</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="contact-modal-container" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 id="contact-modal-title" class="text-xl font-bold text-gray-900"></h3>
+        <button class="modal-close-btn text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+      <div id="contact-modal-body" class="space-y-4">
+        </div>
+      <div class="mt-6 flex justify-end border-t pt-4">
+        <button class="modal-close-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">Cerrar</button>
       </div>
     </div>
   </div>
