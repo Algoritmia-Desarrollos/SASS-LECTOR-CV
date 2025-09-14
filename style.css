@@ -1,13 +1,67 @@
 /* style.css */
 
-/*
-  Este patrón de grilla sutil le da un toque moderno y tecnológico
-  a la sección principal de la página de inicio.
-*/
+/* Patrón de grilla para el hero de la landing page */
 .bg-grid-pattern {
     background-color: #111827; /* bg-gray-900 */
     background-image: 
         linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 30px 30px;
+}
+
+/* --- ESTILOS PARA MODO OSCURO --- */
+/* La clase .dark se aplicará al elemento <html> */
+
+/* Fondo general y color de texto */
+.dark body {
+    background-color: #111827; /* bg-gray-900 */
+    color: #d1d5db; /* text-gray-300 */
+}
+
+/* Tarjetas y secciones */
+.dark .bg-white {
+    background-color: #1f2937; /* bg-gray-800 */
+    border-color: #374151; /* border-gray-700 */
+}
+
+/* Texto principal y títulos */
+.dark .text-gray-900 {
+    color: #f9fafb; /* text-gray-50 */
+}
+.dark .text-gray-800 {
+    color: #f3f4f6; /* text-gray-100 */
+}
+
+/* Texto secundario */
+.dark .text-gray-600 {
+    color: #9ca3af; /* text-gray-400 */
+}
+.dark .text-gray-500 {
+    color: #6b7280; /* text-gray-500 */
+}
+
+/* Bordes */
+.dark .border-gray-200 {
+    border-color: #374151; /* border-gray-700 */
+}
+
+/* Botones y acentos */
+.dark .bg-gray-50 {
+    background-color: #374151; /* bg-gray-700 */
+}
+.dark .hover\:bg-gray-100:hover {
+    background-color: #374151; /* bg-gray-700 */
+}
+.dark .bg-gray-100 {
+    background-color: #1f2937;
+}
+
+/* Inputs y Selects */
+.dark input, .dark textarea, .dark select {
+    background-color: #374151; /* bg-gray-700 */
+    border-color: #4b5563; /* border-gray-600 */
+    color: #f9fafb;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+    color: #9ca3af; /* text-gray-400 */
 }

@@ -1,28 +1,19 @@
 import { supabase } from './supabaseClient.js';
 
-// --- SELECTORES DEL DOM ---
-// Perfil
-const fullNameInput = document.getElementById('full-name');
-const companyNameInput = document.getElementById('company-name');
-const saveProfileBtn = document.getElementById('save-profile-btn');
-
-// Seguridad
+// --- SELECTORES ---
+const userEmailDisplay = document.getElementById('user-email-display');
+const showPasswordFormBtn = document.getElementById('show-password-form-btn');
+const securityView = document.getElementById('security-view');
+const passwordFormContainer = document.getElementById('password-form-container');
 const newPasswordInput = document.getElementById('new-password');
 const updatePasswordBtn = document.getElementById('update-password-btn');
+const cancelPasswordBtn = document.getElementById('cancel-password-btn');
 const passwordFeedback = document.getElementById('password-feedback');
-
-// Facturación
 const manageBillingBtn = document.getElementById('manage-billing-btn');
 const invoicesList = document.getElementById('invoices-list');
-
-// Apariencia
 const themeLightBtn = document.getElementById('theme-light-btn');
 const themeDarkBtn = document.getElementById('theme-dark-btn');
-
-// Notificaciones
-const notifyWeeklyCheckbox = document.getElementById('notify-weekly');
-const notifyCandidatesCheckbox = document.getElementById('notify-candidates');
-const notifyProductCheckbox = document.getElementById('notify-product');
+const notificationCheckboxes = document.querySelectorAll('.toggle-checkbox');
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,75 +22,54 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme();
 });
 
-// --- LÓGICA DE CARGA DE DATOS ---
+// --- CARGA DE DATOS ---
 async function loadSettingsData() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Cargar perfil de usuario
-  const { data: profile, error: profileError } = await supabase
+  userEmailDisplay.textContent = user.email;
+
+  const { data: profile } = await supabase
     .from('app_saas_users')
-    .select('full_name, company_name, notification_preferences')
+    .select('notification_preferences')
     .eq('id', user.id)
     .single();
 
-  if (profile) {
-    fullNameInput.value = profile.full_name || '';
-    companyNameInput.value = profile.company_name || '';
-    // Cargar preferencias de notificación
-    if (profile.notification_preferences) {
-        notifyWeeklyCheckbox.checked = profile.notification_preferences.weekly_summary;
-        notifyCandidatesCheckbox.checked = profile.notification_preferences.new_candidates;
-        notifyProductCheckbox.checked = profile.notification_preferences.product_updates;
-    }
+  if (profile && profile.notification_preferences) {
+      document.getElementById('notify-weekly').checked = profile.notification_preferences.weekly_summary || false;
+      document.getElementById('notify-candidates').checked = profile.notification_preferences.new_candidates || false;
+      document.getElementById('notify-product').checked = profile.notification_preferences.product_updates || false;
   }
 
-  // Cargar historial de pagos (simulado)
-  // En una app real, aquí consultarías tu tabla de facturas
-  renderInvoices(getFakeInvoices()); 
+  const { data: invoices } = await supabase
+    .from('app_saas_invoices')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+    
+  renderInvoices(invoices || []);
 }
 
 // --- MANEJO DE EVENTOS ---
 function setupEventListeners() {
-  saveProfileBtn.addEventListener('click', handleProfileUpdate);
+  showPasswordFormBtn.addEventListener('click', () => togglePasswordForm(true));
+  cancelPasswordBtn.addEventListener('click', () => togglePasswordForm(false));
   updatePasswordBtn.addEventListener('click', handleUpdatePassword);
-  
-  // Event listener para todas las checkboxes de notificaciones
-  [notifyWeeklyCheckbox, notifyCandidatesCheckbox, notifyProductCheckbox].forEach(checkbox => {
-    checkbox.addEventListener('change', handleNotificationChange);
-  });
-
+  notificationCheckboxes.forEach(checkbox => checkbox.addEventListener('change', handleNotificationChange));
   themeLightBtn.addEventListener('click', () => setTheme('light'));
   themeDarkBtn.addEventListener('click', () => setTheme('dark'));
-  
   manageBillingBtn.addEventListener('click', () => {
-      alert("Redirigiendo al portal de facturación de Stripe...");
-      // En producción: window.location.href = 'URL_DEL_PORTAL_DE_STRIPE';
+      alert("En una aplicación real, esto redirigiría a un portal de cliente de Stripe para gestionar la suscripción y los métodos de pago.");
   });
 }
 
 // --- LÓGICA DE ACCIONES ---
-
-async function handleProfileUpdate() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const updatedProfile = {
-    full_name: fullNameInput.value.trim(),
-    company_name: companyNameInput.value.trim(),
-  };
-
-  const { error } = await supabase.from('app_saas_users').update(updatedProfile).eq('id', user.id);
-  
-  if (error) {
-    alert("Error al guardar el perfil: " + error.message);
-  } else {
-    alert("Perfil guardado con éxito.");
-  }
+function togglePasswordForm(show) {
+    securityView.classList.toggle('hidden', show);
+    passwordFormContainer.classList.toggle('hidden', !show);
 }
 
 async function handleUpdatePassword() {
-  // (La lógica es la misma que en la respuesta anterior)
   const newPassword = newPasswordInput.value;
   if (newPassword.length < 6) {
     showPasswordFeedback("La contraseña debe tener al menos 6 caracteres.", "error");
@@ -113,6 +83,7 @@ async function handleUpdatePassword() {
   } else {
     showPasswordFeedback("¡Contraseña actualizada con éxito!", "success");
     newPasswordInput.value = '';
+    setTimeout(() => togglePasswordForm(false), 2000); // Oculta el form tras el éxito
   }
   updatePasswordBtn.disabled = false;
   updatePasswordBtn.textContent = 'Guardar Contraseña';
@@ -121,21 +92,15 @@ async function handleUpdatePassword() {
 async function handleNotificationChange() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const prefs = {
-        weekly_summary: notifyWeeklyCheckbox.checked,
-        new_candidates: notifyCandidatesCheckbox.checked,
-        product_updates: notifyProductCheckbox.checked,
+        weekly_summary: document.getElementById('notify-weekly').checked,
+        new_candidates: document.getElementById('notify-candidates').checked,
+        product_updates: document.getElementById('notify-product').checked,
     };
-    
-    const { error } = await supabase.from('app_saas_users').update({ notification_preferences: prefs }).eq('id', user.id);
-    if(error) {
-        alert("No se pudieron guardar tus preferencias de notificación.");
-    }
+    await supabase.from('app_saas_users').update({ notification_preferences: prefs }).eq('id', user.id);
 }
 
-
-// --- LÓGICA DE APARIENCIA (TEMA) ---
+// --- TEMA (APARIENCIA) ---
 function setTheme(theme) {
   localStorage.setItem('theme', theme);
   applyTheme();
@@ -144,7 +109,7 @@ function setTheme(theme) {
 function applyTheme() {
   const theme = localStorage.getItem('theme') || 'light';
   if (theme === 'dark') {
-    document.documentElement.classList.add('dark'); // Asumiendo que tienes estilos para dark mode en tu CSS
+    document.documentElement.classList.add('dark');
     themeDarkBtn.classList.add('bg-indigo-600', 'text-white');
     themeLightBtn.classList.remove('bg-indigo-600', 'text-white');
   } else {
@@ -154,37 +119,27 @@ function applyTheme() {
   }
 }
 
-
-// --- RENDERIZADO Y FUNCIONES AUXILIARES ---
+// --- RENDERIZADO Y AUXILIARES ---
 function renderInvoices(invoices) {
-    if (!invoices || invoices.length === 0) {
-        invoicesList.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay pagos registrados.</td></tr>`;
+    if (invoices.length === 0) {
+        invoicesList.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No tienes facturas anteriores.</td></tr>`;
         return;
     }
-    invoicesList.innerHTML = invoices.map(invoice => `
-        <tr class="text-sm text-gray-800">
-            <td class="p-3">${invoice.date}</td>
-            <td class="p-3">${invoice.plan}</td>
-            <td class="p-3 font-medium">${invoice.amount}</td>
-            <td class="p-3">
-                <span class="px-2 py-1 text-xs font-semibold rounded-full ${invoice.status === 'Pagado' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                    ${invoice.status}
-                </span>
-            </td>
-            <td class="p-3">
-                <a href="${invoice.url}" target="_blank" class="text-indigo-600 hover:underline">Ver</a>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function getFakeInvoices() {
-    // ESTO ES SIMULADO. En producción, vendría de tu base de datos.
-    return [
-        { date: '01/09/2025', plan: 'Básico', amount: '$29.00', status: 'Pagado', url: '#' },
-        { date: '01/08/2025', plan: 'Básico', amount: '$29.00', status: 'Pagado', url: '#' },
-        { date: '01/07/2025', plan: 'Básico', amount: '$29.00', status: 'Pagado', url: '#' },
-    ];
+    invoicesList.innerHTML = invoices.map(invoice => {
+        const date = new Date(invoice.created_at).toLocaleDateString('es-ES');
+        const amount = `$${(invoice.amount / 100).toFixed(2)}`;
+        const statusClass = invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+        const statusText = invoice.status === 'paid' ? 'Pagado' : 'Fallido';
+        return `
+            <tr class="text-sm text-gray-800">
+                <td class="p-3">${date}</td>
+                <td class="p-3">${invoice.plan_name}</td>
+                <td class="p-3 font-medium">${amount}</td>
+                <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${statusText}</span></td>
+                <td class="p-3"><a href="${invoice.invoice_url}" target="_blank" class="text-indigo-600 hover:underline">Descargar</a></td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function showPasswordFeedback(message, type) {
