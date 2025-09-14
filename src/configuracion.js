@@ -93,26 +93,38 @@ function setupEventListeners() {
   updatePasswordBtn.addEventListener('click', handleUpdatePassword);
   notificationCheckboxes.forEach(checkbox => checkbox.addEventListener('change', handleNotificationChange));
   
-  const redirectToMercadoPago = async (button) => {
+  // Dentro de la función setupEventListeners en src/configuracion.js
+
+  const redirectToMercadoPago = (button) => {
       button.disabled = true;
-      button.textContent = 'Cargando...';
+      button.textContent = 'Redirigiendo...';
 
-      try {
-        // Por ahora, lo haré para el plan "básico". Luego puedes hacerlo dinámico.
-        const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
-          body: { planId: 'basic' },
-        });
+      // Objeto con los IDs de tus planes de Mercado Pago
+      const planConfig = {
+          basic: {
+              id: 'a32322dc215f432ba91d288e1cf7de88', // Tu ID del Plan Básico
+          },
+          professional: {
+              id: '367e0c6c5785494f905b048450a4fa37', // Tu ID del Plan Avanzado
+          }
+      };
+      
+      const planId = 'basic'; 
+      const selectedPlan = planConfig[planId];
 
-        if (error) throw error;
-
-        // Redirigir al usuario al link de pago de Mercado Pago
-        window.location.href = data.init_point;
-
-      } catch (error) {
-        alert(`Error al generar el link de pago: ${error.message}`);
-        button.disabled = false;
-        button.textContent = 'Portal de Cliente'; // O el texto original
+      // --- ESTA ES LA LÍNEA CORREGIDA ---
+      if (!selectedPlan || selectedPlan.id.length < 30) { 
+          alert('Error: El ID del plan no está configurado correctamente en el código.');
+          button.disabled = false;
+          button.textContent = 'Portal de Cliente';
+          return;
       }
+      
+      // Construimos la URL de checkout directamente en el navegador
+      const checkoutUrl = `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${selectedPlan.id}`;
+      
+      // Redirigimos al usuario a la página de Mercado Pago
+      window.location.href = checkoutUrl;
   };
 
   if (manageBillingBtn) {
@@ -122,7 +134,6 @@ function setupEventListeners() {
     replacePaymentBtn.addEventListener('click', () => redirectToMercadoPago(replacePaymentBtn));
   }
 }
-
 // ... (resto del código de configuracion.js)
 // --- LÓGICA DE ACCIONES ---
 function togglePasswordForm(show) {
