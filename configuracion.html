@@ -8,6 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body class="bg-gray-100">
 
@@ -24,98 +25,79 @@
       <aside class="lg:col-span-3">
         <nav id="settings-nav" class="space-y-1" aria-label="Settings">
           <a href="#cuenta" class="settings-nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-            <i class="fa-solid fa-user-circle mr-3"></i>
-            <span class="truncate">Cuenta</span>
+            <i class="fa-solid fa-user-circle mr-3"></i><span class="truncate">Cuenta</span>
           </a>
           <a href="#seguridad" class="settings-nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-            <i class="fa-solid fa-shield-halved mr-3"></i>
-            <span class="truncate">Seguridad</span>
+            <i class="fa-solid fa-shield-halved mr-3"></i><span class="truncate">Seguridad</span>
           </a>
           <a href="#facturacion" class="settings-nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-            <i class="fa-solid fa-credit-card mr-3"></i>
-            <span class="truncate">Facturación</span>
+            <i class="fa-solid fa-credit-card mr-3"></i><span class="truncate">Facturación</span>
           </a>
            <a href="#notificaciones" class="settings-nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-            <i class="fa-solid fa-bell mr-3"></i>
-            <span class="truncate">Notificaciones</span>
+            <i class="fa-solid fa-bell mr-3"></i><span class="truncate">Notificaciones</span>
           </a>
         </nav>
       </aside>
 
       <div class="lg:col-span-9 space-y-8">
-
         <section id="panel-cuenta" class="settings-panel bg-white p-6 shadow-lg rounded-xl border border-gray-200">
             <h2 class="text-xl font-bold text-gray-800 border-b pb-4">Perfil</h2>
             <div class="mt-4">
                 <label class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
                 <p id="user-email-display" class="mt-1 text-gray-500">cargando...</p>
-                <p class="text-xs text-gray-400 mt-1">El correo electrónico no se puede modificar.</p>
             </div>
         </section>
 
         <section id="panel-seguridad" class="settings-panel hidden bg-white p-6 shadow-lg rounded-xl border border-gray-200">
             <h2 class="text-xl font-bold text-gray-800 border-b pb-4">Seguridad</h2>
             <div id="security-view" class="mt-4">
-                <p class="text-sm text-gray-600 mb-4">Actualiza tu contraseña para mantener tu cuenta segura.</p>
-                <button id="show-password-form-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm transition-colors">
-                    Restablecer Contraseña
-                </button>
+                <p class="text-sm text-gray-600 mb-4">Actualiza tu contraseña.</p>
+                <button id="show-password-form-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">Restablecer Contraseña</button>
             </div>
             <div id="password-form-container" class="hidden mt-4">
                 <label for="new-password" class="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
-                <input type="password" id="new-password" class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="••••••••">
+                <input type="password" id="new-password" class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm" placeholder="••••••••">
                 <div class="mt-3 space-x-2">
-                    <button id="update-password-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition-colors">Guardar Contraseña</button>
+                    <button id="update-password-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Guardar</button>
                     <button id="cancel-password-btn" class="text-sm text-gray-600 hover:text-gray-900">Cancelar</button>
                 </div>
                 <p id="password-feedback" class="text-sm mt-2"></p>
             </div>
         </section>
 
-<section id="panel-facturacion" class="settings-panel hidden space-y-8">
-
-    <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
-        <div class="flex justify-between items-center">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-800">Plan Activo</h3>
-                <p id="current-plan-display" class="text-gray-600 mt-1">Cargando plan...</p>
-                <p class="text-sm text-gray-500">El uso se factura al final de tu ciclo de facturación.</p>
-            </div>
-            <button id="manage-billing-btn" class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-sm transition-colors">
-                Portal de Cliente
-            </button>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Facturación</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">Método de Pago</label>
-                <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                    <p id="payment-method-display" class="text-gray-800">No hay tarjetas guardadas</p>
-                    <button id="replace-payment-btn" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Añadir Tarjeta</button>
+        <section id="panel-facturacion" class="settings-panel hidden space-y-8">
+            <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Plan Activo</h3>
+                        <p id="current-plan-display" class="text-gray-600 mt-1">Cargando plan...</p>
+                    </div>
+                    <a href="planes.html" class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-4 rounded-lg text-sm">Ver Planes</a>
                 </div>
-                <p class="text-xs text-gray-500">Serás redirigido a Mercado Pago para añadir tu tarjeta de forma segura.</p>
             </div>
-            <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">Email de Facturación</label>
-                <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                    <p id="billing-email-display" class="text-gray-800 truncate">cargando...</p>
+            <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Facturación</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-700">Método de Pago</label>
+                        <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                            <p id="payment-method-display" class="text-gray-800">No hay tarjetas guardadas</p>
+                            <button id="add-payment-method-btn" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Añadir Tarjeta</button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-700">Email de Facturación</label>
+                        <div class="flex items-center p-3 border rounded-lg bg-gray-50">
+                            <p id="billing-email-display" class="text-gray-800 truncate">cargando...</p>
+                        </div>
+                    </div>
                 </div>
-                 <p class="text-xs text-gray-500">Todos los recibos se enviarán a esta dirección.</p>
             </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Historial de Facturación</h3>
-        <div id="invoices-list" class="space-y-2">
+            <div class="bg-white p-6 shadow-lg rounded-xl border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Historial de Facturación</h3>
+                <div id="invoices-list" class="space-y-2"></div>
             </div>
-    </div>
-</section>
-
-
+        </section>
 
         <section id="panel-notificaciones" class="settings-panel hidden bg-white p-6 shadow-lg rounded-xl border border-gray-200">
             <h2 class="text-xl font-bold text-gray-800 border-b pb-4">Preferencias de Notificación</h2>
@@ -123,31 +105,59 @@
                  <label class="flex items-center justify-between cursor-pointer">
                     <div>
                         <span class="text-sm font-medium text-gray-800">Resumen Semanal</span>
-                        <p class="text-xs text-gray-500">Recibe un email cada lunes con tus estadísticas.</p>
+                        <p class="text-xs text-gray-500">Recibe un email cada lunes.</p>
                     </div>
-                    <input type="checkbox" id="notify-weekly" class="toggle-checkbox rounded h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                    <input type="checkbox" id="notify-weekly" class="toggle-checkbox rounded h-4 w-4 text-indigo-600">
                 </label>
                 <label class="flex items-center justify-between cursor-pointer">
                     <div>
                         <span class="text-sm font-medium text-gray-800">Nuevos Candidatos</span>
                         <p class="text-xs text-gray-500">Recibe una alerta cuando un candidato postule.</p>
                     </div>
-                    <input type="checkbox" id="notify-candidates" class="toggle-checkbox rounded h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                    <input type="checkbox" id="notify-candidates" class="toggle-checkbox rounded h-4 w-4 text-indigo-600">
                 </label>
                 <label class="flex items-center justify-between cursor-pointer">
                     <div>
                         <span class="text-sm font-medium text-gray-800">Novedades del Producto</span>
                         <p class="text-xs text-gray-500">Mantente al día con las nuevas funciones.</p>
                     </div>
-                    <input type="checkbox" id="notify-product" class="toggle-checkbox rounded h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                    <input type="checkbox" id="notify-product" class="toggle-checkbox rounded h-4 w-4 text-indigo-600">
                 </label>
             </div>
         </section>
-
       </div>
     </div>
   </main>
   
+  <div id="card-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-xl font-bold text-gray-900">Añadir Método de Pago</h3>
+        <button id="close-card-modal" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+      <form id="card-form" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Número de Tarjeta</label>
+            <div id="form-card-number" class="mt-1 p-3 border rounded-lg"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Vencimiento</label>
+                <div id="form-card-expiration-date" class="mt-1 p-3 border rounded-lg"></div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">CVV</label>
+                <div id="form-card-security-code" class="mt-1 p-3 border rounded-lg"></div>
+            </div>
+        </div>
+         <p id="card-form-error" class="text-sm text-red-600"></p>
+        <div class="mt-6 flex justify-end">
+            <button type="submit" id="card-form-submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg">Guardar Tarjeta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="src/navigation.js"></script>
   <script type="module" src="src/configuracion.js"></script>
 </body>

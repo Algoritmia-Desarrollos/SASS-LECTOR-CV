@@ -12,15 +12,41 @@ const newPasswordInput = document.getElementById('new-password');
 const updatePasswordBtn = document.getElementById('update-password-btn');
 const cancelPasswordBtn = document.getElementById('cancel-password-btn');
 const passwordFeedback = document.getElementById('password-feedback');
-const manageBillingBtn = document.getElementById('manage-billing-btn');
-const replacePaymentBtn = document.getElementById('replace-payment-btn');
 const invoicesList = document.getElementById('invoices-list');
 const notificationCheckboxes = document.querySelectorAll('.toggle-checkbox');
+const addPaymentMethodBtn = document.getElementById('add-payment-method-btn');
+
+// --- SELECTORES DEL MODAL DE TARJETA ---
+const cardModal = document.getElementById('card-modal');
+const closeCardModalBtn = document.getElementById('close-card-modal');
+const cardForm = document.getElementById('card-form');
+const cardFormSubmitBtn = document.getElementById('card-form-submit-btn');
+const cardFormError = document.getElementById('card-form-error');
 
 // --- SELECTORES PARA NAVEGACIÓN ---
 const settingsNav = document.getElementById('settings-nav');
 const navLinks = settingsNav.querySelectorAll('a');
 const panels = document.querySelectorAll('.settings-panel');
+
+// --- Lógica del Formulario de Tarjeta de Mercado Pago ---
+// ¡TU PUBLIC KEY YA ESTÁ AQUÍ!
+const mp = new MercadoPago('APP_USR-3229403e-a10b-40ae-b173-d1c239ce954a');
+let cardNumber, cardExpirationDate, cardSecurityCode;
+
+function setupCardForm() {
+    const cardStyle = {
+        style: {
+            base: {
+                color: "rgb(30 41 59)",
+                fontSize: "16px",
+                placeholder: { color: "rgb(107 114 128)" },
+            },
+        },
+    };
+    cardNumber = mp.fields.create('cardNumber', cardStyle).mount('form-card-number');
+    cardExpirationDate = mp.fields.create('expirationDate', cardStyle).mount('form-card-expiration-date');
+    cardSecurityCode = mp.fields.create('securityCode', cardStyle).mount('form-card-security-code');
+}
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -49,12 +75,12 @@ async function loadSettingsData() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  userEmailDisplay.textContent = user.email;
+  if(userEmailDisplay) userEmailDisplay.textContent = user.email;
   if (billingEmailDisplay) billingEmailDisplay.textContent = user.email;
 
   const { data: profile } = await supabase
     .from('app_saas_users')
-    .select('subscription_plan, notification_preferences, mercadopago_customer_id') // Asumiendo que tendrás una columna así
+    .select('subscription_plan, notification_preferences, mercadopago_customer_id')
     .eq('id', user.id)
     .single();
 
@@ -68,10 +94,9 @@ async function loadSettingsData() {
           document.getElementById('notify-candidates').checked = profile.notification_preferences.new_candidates || false;
           document.getElementById('notify-product').checked = profile.notification_preferences.product_updates || false;
       }
-      // Simulación: Si el usuario tiene un ID de cliente de MP, mostramos una tarjeta falsa.
       if (profile.mercadopago_customer_id && paymentMethodDisplay) {
-          paymentMethodDisplay.textContent = 'Tarjeta terminada en 4242';
-          replacePaymentBtn.textContent = 'Reemplazar';
+          paymentMethodDisplay.textContent = 'Tarjeta guardada';
+          addPaymentMethodBtn.textContent = 'Reemplazar';
       }
   }
 
@@ -84,61 +109,56 @@ async function loadSettingsData() {
   renderInvoices(invoices || []);
 }
 
-// ... (código existente de configuracion.js)
-
 // --- MANEJO DE EVENTOS ---
 function setupEventListeners() {
-  showPasswordFormBtn.addEventListener('click', () => togglePasswordForm(true));
-  cancelPasswordBtn.addEventListener('click', () => togglePasswordForm(false));
-  updatePasswordBtn.addEventListener('click', handleUpdatePassword);
-  notificationCheckboxes.forEach(checkbox => checkbox.addEventListener('change', handleNotificationChange));
-  
-  // Dentro de la función setupEventListeners en src/configuracion.js
+    if(showPasswordFormBtn) showPasswordFormBtn.addEventListener('click', () => togglePasswordForm(true));
+    if(cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', () => togglePasswordForm(false));
+    if(updatePasswordBtn) updatePasswordBtn.addEventListener('click', handleUpdatePassword);
+    
+    notificationCheckboxes.forEach(checkbox => checkbox.addEventListener('change', handleNotificationChange));
+    
+    if(addPaymentMethodBtn) addPaymentMethodBtn.addEventListener('click', () => {
+        cardModal.classList.remove('hidden');
+        if (!cardNumber) setupCardForm(); // Inicializa el form solo la primera vez que se abre
+    });
 
-  const redirectToMercadoPago = (button) => {
-      button.disabled = true;
-      button.textContent = 'Redirigiendo...';
+    if(closeCardModalBtn) closeCardModalBtn.addEventListener('click', () => cardModal.classList.add('hidden'));
 
-      // Objeto con los IDs de tus planes de Mercado Pago
-      const planConfig = {
-          basic: {
-              id: 'a32322dc215f432ba91d288e1cf7de88', // Tu ID del Plan Básico
-          },
-          professional: {
-              id: '367e0c6c5785494f905b048450a4fa37', // Tu ID del Plan Avanzado
-          }
-      };
-      
-      const planId = 'basic'; 
-      const selectedPlan = planConfig[planId];
+    if(cardForm) cardForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        cardFormSubmitBtn.disabled = true;
+        cardFormSubmitBtn.textContent = 'Guardando...';
+        cardFormError.textContent = '';
 
-      // --- ESTA ES LA LÍNEA CORREGIDA ---
-      if (!selectedPlan || selectedPlan.id.length < 30) { 
-          alert('Error: El ID del plan no está configurado correctamente en el código.');
-          button.disabled = false;
-          button.textContent = 'Portal de Cliente';
-          return;
-      }
-      
-      // Construimos la URL de checkout directamente en el navegador
-      const checkoutUrl = `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${selectedPlan.id}`;
-      
-      // Redirigimos al usuario a la página de Mercado Pago
-      window.location.href = checkoutUrl;
-  };
+        try {
+            const { token } = await cardNumber.createToken();
+            if (!token) {
+                throw new Error('No se pudo generar el token. Revisa los datos de la tarjeta.');
+            }
 
-  if (manageBillingBtn) {
-    manageBillingBtn.addEventListener('click', () => redirectToMercadoPago(manageBillingBtn));
-  }
-  if (replacePaymentBtn) {
-    replacePaymentBtn.addEventListener('click', () => redirectToMercadoPago(replacePaymentBtn));
-  }
+            const { data, error } = await supabase.functions.invoke('save-card', {
+                body: { card_token: token },
+            });
+
+            if (error) throw error;
+            
+            alert('¡Tarjeta guardada con éxito!');
+            cardModal.classList.add('hidden');
+            loadSettingsData(); // Recargar datos para mostrar la nueva tarjeta
+
+        } catch (error) {
+            cardFormError.textContent = error.message || 'Error al guardar la tarjeta.';
+        } finally {
+            cardFormSubmitBtn.disabled = false;
+            cardFormSubmitBtn.textContent = 'Guardar Tarjeta';
+        }
+    });
 }
-// ... (resto del código de configuracion.js)
+
 // --- LÓGICA DE ACCIONES ---
 function togglePasswordForm(show) {
-    securityView.classList.toggle('hidden', show);
-    passwordFormContainer.classList.toggle('hidden', !show);
+    if(securityView) securityView.classList.toggle('hidden', show);
+    if(passwordFormContainer) passwordFormContainer.classList.toggle('hidden', !show);
 }
 
 async function handleUpdatePassword() {
@@ -201,6 +221,7 @@ function renderInvoices(invoices) {
 }
 
 function showPasswordFeedback(message, type) {
+  if (!passwordFeedback) return;
   passwordFeedback.textContent = message;
   passwordFeedback.className = 'text-sm mt-2';
   passwordFeedback.classList.add(type === 'error' ? 'text-red-600' : 'text-green-600');

@@ -7,7 +7,12 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-// --- Función para verificar la firma de Mercado Pago ---
+// Mapeo de IDs de Mercado Pago a los nombres de tus planes
+const planConfig = {
+    'a32322dc215f432ba91d288e1cf7de88': 'basic',       // Plan Básico
+    '367e0c6c5785494f905b048450a4fa37': 'professional' // Plan Profesional/Avanzado
+};
+
 async function verifySignature(req: Request, rawBody: string): Promise<boolean> {
   const secret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')!;
   const signatureHeader = req.headers.get('x-signature');
@@ -30,21 +35,18 @@ async function verifySignature(req: Request, rawBody: string): Promise<boolean> 
 
   return calculatedHash === receivedHash;
 }
-// --------------------------------------------------------
 
 serve(async (req) => {
-  const rawBody = await req.text(); // Leemos el cuerpo como texto para la firma
+  const rawBody = await req.text();
 
-  // --- Verificación de la firma ---
   const isVerified = await verifySignature(req, rawBody);
   if (!isVerified) {
     console.error("Webhook signature verification failed.");
     return new Response("Signature verification failed", { status: 401 });
   }
-  // ---------------------------------
 
   try {
-    const body = JSON.parse(rawBody); // Ahora procesamos el JSON
+    const body = JSON.parse(rawBody);
     console.log('Webhook de Mercado Pago recibido y verificado:', body)
 
     if (body.type === 'preapproval' && body.action === 'created') {
@@ -58,6 +60,12 @@ serve(async (req) => {
       
       const userEmail = subscriptionDetails.payer_email
       const customerId = subscriptionDetails.payer_id
+      const mercadoPagoPlanId = subscriptionDetails.preapproval_plan_id
+      
+      const newPlan = planConfig[mercadoPagoPlanId];
+      if (!newPlan) {
+        throw new Error(`Plan ID ${mercadoPagoPlanId} no reconocido.`);
+      }
 
       const { data: user, error: userError } = await supabaseAdmin
         .from('users')
@@ -69,14 +77,14 @@ serve(async (req) => {
       const { error: updateError } = await supabaseAdmin
         .from('app_saas_users')
         .update({
-          subscription_plan: 'basic',
+          subscription_plan: newPlan,
           mercadopago_customer_id: customerId.toString(),
           mercadopago_subscription_id: subscriptionId
         })
         .eq('id', user.id)
       
       if (updateError) throw new Error(`Error al actualizar perfil: ${updateError.message}`)
-      console.log(`Suscripción activada para el usuario ${userEmail}`)
+      console.log(`Suscripción al plan '${newPlan}' activada para el usuario ${userEmail}`)
     }
 
     return new Response('Webhook recibido', { status: 200 })
