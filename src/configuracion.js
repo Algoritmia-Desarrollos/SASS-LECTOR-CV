@@ -2,6 +2,9 @@ import { supabase } from './supabaseClient.js';
 
 // --- SELECTORES ---
 const userEmailDisplay = document.getElementById('user-email-display');
+const billingEmailDisplay = document.getElementById('billing-email-display');
+const currentPlanDisplay = document.getElementById('current-plan-display');
+const paymentMethodDisplay = document.getElementById('payment-method-display');
 const showPasswordFormBtn = document.getElementById('show-password-form-btn');
 const securityView = document.getElementById('security-view');
 const passwordFormContainer = document.getElementById('password-form-container');
@@ -10,17 +13,36 @@ const updatePasswordBtn = document.getElementById('update-password-btn');
 const cancelPasswordBtn = document.getElementById('cancel-password-btn');
 const passwordFeedback = document.getElementById('password-feedback');
 const manageBillingBtn = document.getElementById('manage-billing-btn');
+const replacePaymentBtn = document.getElementById('replace-payment-btn');
 const invoicesList = document.getElementById('invoices-list');
-const themeLightBtn = document.getElementById('theme-light-btn');
-const themeDarkBtn = document.getElementById('theme-dark-btn');
 const notificationCheckboxes = document.querySelectorAll('.toggle-checkbox');
+
+// --- SELECTORES PARA NAVEGACIÓN ---
+const settingsNav = document.getElementById('settings-nav');
+const navLinks = settingsNav.querySelectorAll('a');
+const panels = document.querySelectorAll('.settings-panel');
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
   loadSettingsData();
   setupEventListeners();
-  applyTheme();
+  setupNavigation();
 });
+
+// --- LÓGICA DE NAVEGACIÓN ---
+function setupNavigation() {
+    const handleNav = () => {
+        const hash = window.location.hash || '#cuenta';
+        panels.forEach(panel => panel.classList.add('hidden'));
+        navLinks.forEach(link => link.classList.remove('active'));
+        const activePanel = document.getElementById(`panel-${hash.substring(1)}`);
+        const activeLink = settingsNav.querySelector(`a[href="${hash}"]`);
+        if (activePanel) activePanel.classList.remove('hidden');
+        if (activeLink) activeLink.classList.add('active');
+    };
+    window.addEventListener('hashchange', handleNav);
+    handleNav(); 
+}
 
 // --- CARGA DE DATOS ---
 async function loadSettingsData() {
@@ -28,17 +50,29 @@ async function loadSettingsData() {
   if (!user) return;
 
   userEmailDisplay.textContent = user.email;
+  if (billingEmailDisplay) billingEmailDisplay.textContent = user.email;
 
   const { data: profile } = await supabase
     .from('app_saas_users')
-    .select('notification_preferences')
+    .select('subscription_plan, notification_preferences, mercadopago_customer_id') // Asumiendo que tendrás una columna así
     .eq('id', user.id)
     .single();
 
-  if (profile && profile.notification_preferences) {
-      document.getElementById('notify-weekly').checked = profile.notification_preferences.weekly_summary || false;
-      document.getElementById('notify-candidates').checked = profile.notification_preferences.new_candidates || false;
-      document.getElementById('notify-product').checked = profile.notification_preferences.product_updates || false;
+  if (profile) {
+      if (currentPlanDisplay) {
+          const planName = profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1);
+          currentPlanDisplay.textContent = `${planName} Plan`;
+      }
+      if (profile.notification_preferences) {
+          document.getElementById('notify-weekly').checked = profile.notification_preferences.weekly_summary || false;
+          document.getElementById('notify-candidates').checked = profile.notification_preferences.new_candidates || false;
+          document.getElementById('notify-product').checked = profile.notification_preferences.product_updates || false;
+      }
+      // Simulación: Si el usuario tiene un ID de cliente de MP, mostramos una tarjeta falsa.
+      if (profile.mercadopago_customer_id && paymentMethodDisplay) {
+          paymentMethodDisplay.textContent = 'Tarjeta terminada en 4242';
+          replacePaymentBtn.textContent = 'Reemplazar';
+      }
   }
 
   const { data: invoices } = await supabase
@@ -50,19 +84,46 @@ async function loadSettingsData() {
   renderInvoices(invoices || []);
 }
 
+// ... (código existente de configuracion.js)
+
 // --- MANEJO DE EVENTOS ---
 function setupEventListeners() {
   showPasswordFormBtn.addEventListener('click', () => togglePasswordForm(true));
   cancelPasswordBtn.addEventListener('click', () => togglePasswordForm(false));
   updatePasswordBtn.addEventListener('click', handleUpdatePassword);
   notificationCheckboxes.forEach(checkbox => checkbox.addEventListener('change', handleNotificationChange));
-  themeLightBtn.addEventListener('click', () => setTheme('light'));
-  themeDarkBtn.addEventListener('click', () => setTheme('dark'));
-  manageBillingBtn.addEventListener('click', () => {
-      alert("En una aplicación real, esto redirigiría a un portal de cliente de Stripe para gestionar la suscripción y los métodos de pago.");
-  });
+  
+  const redirectToMercadoPago = async (button) => {
+      button.disabled = true;
+      button.textContent = 'Cargando...';
+
+      try {
+        // Por ahora, lo haré para el plan "básico". Luego puedes hacerlo dinámico.
+        const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
+          body: { planId: 'basic' },
+        });
+
+        if (error) throw error;
+
+        // Redirigir al usuario al link de pago de Mercado Pago
+        window.location.href = data.init_point;
+
+      } catch (error) {
+        alert(`Error al generar el link de pago: ${error.message}`);
+        button.disabled = false;
+        button.textContent = 'Portal de Cliente'; // O el texto original
+      }
+  };
+
+  if (manageBillingBtn) {
+    manageBillingBtn.addEventListener('click', () => redirectToMercadoPago(manageBillingBtn));
+  }
+  if (replacePaymentBtn) {
+    replacePaymentBtn.addEventListener('click', () => redirectToMercadoPago(replacePaymentBtn));
+  }
 }
 
+// ... (resto del código de configuracion.js)
 // --- LÓGICA DE ACCIONES ---
 function togglePasswordForm(show) {
     securityView.classList.toggle('hidden', show);
@@ -83,7 +144,7 @@ async function handleUpdatePassword() {
   } else {
     showPasswordFeedback("¡Contraseña actualizada con éxito!", "success");
     newPasswordInput.value = '';
-    setTimeout(() => togglePasswordForm(false), 2000); // Oculta el form tras el éxito
+    setTimeout(() => togglePasswordForm(false), 2000);
   }
   updatePasswordBtn.disabled = false;
   updatePasswordBtn.textContent = 'Guardar Contraseña';
@@ -100,44 +161,30 @@ async function handleNotificationChange() {
     await supabase.from('app_saas_users').update({ notification_preferences: prefs }).eq('id', user.id);
 }
 
-// --- TEMA (APARIENCIA) ---
-function setTheme(theme) {
-  localStorage.setItem('theme', theme);
-  applyTheme();
-}
-
-function applyTheme() {
-  const theme = localStorage.getItem('theme') || 'light';
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark');
-    themeDarkBtn.classList.add('bg-indigo-600', 'text-white');
-    themeLightBtn.classList.remove('bg-indigo-600', 'text-white');
-  } else {
-    document.documentElement.classList.remove('dark');
-    themeLightBtn.classList.add('bg-indigo-600', 'text-white');
-    themeDarkBtn.classList.remove('bg-indigo-600', 'text-white');
-  }
-}
-
 // --- RENDERIZADO Y AUXILIARES ---
 function renderInvoices(invoices) {
+    if (!invoicesList) return;
     if (invoices.length === 0) {
-        invoicesList.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No tienes facturas anteriores.</td></tr>`;
+        invoicesList.innerHTML = `<div class="p-4 text-center text-gray-500">No tienes facturas anteriores.</div>`;
         return;
     }
     invoicesList.innerHTML = invoices.map(invoice => {
-        const date = new Date(invoice.created_at).toLocaleDateString('es-ES');
+        const date = new Date(invoice.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
         const amount = `$${(invoice.amount / 100).toFixed(2)}`;
-        const statusClass = invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-        const statusText = invoice.status === 'paid' ? 'Pagado' : 'Fallido';
+        const isPaid = invoice.status === 'paid';
+        
         return `
-            <tr class="text-sm text-gray-800">
-                <td class="p-3">${date}</td>
-                <td class="p-3">${invoice.plan_name}</td>
-                <td class="p-3 font-medium">${amount}</td>
-                <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${statusText}</span></td>
-                <td class="p-3"><a href="${invoice.invoice_url}" target="_blank" class="text-indigo-600 hover:underline">Descargar</a></td>
-            </tr>
+            <div class="invoice-item">
+                <div class="flex items-center">
+                    <i class="fa-solid ${isPaid ? 'fa-circle-check text-green-500' : 'fa-circle-xmark text-red-500'} mr-4"></i>
+                    <div class="flex-grow">
+                        <p class="font-medium text-gray-800">${invoice.plan_name} (${isPaid ? 'Pagado' : 'Fallido'})</p>
+                        <p class="text-sm text-gray-500">${date}</p>
+                    </div>
+                    <p class="font-mono text-sm text-gray-600 mr-4">${amount}</p>
+                    <a href="${invoice.invoice_url || '#'}" target="_blank" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Ver</a>
+                </div>
+            </div>
         `;
     }).join('');
 }
