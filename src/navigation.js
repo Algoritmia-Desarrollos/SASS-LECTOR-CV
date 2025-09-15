@@ -6,8 +6,6 @@ async function handleLogout() {
     window.location.href = '/index.html';
 }
 
-// ...tu código anterior
-
 async function loadNav() {
     const response = await fetch('/nav.html');
     const navHtml = await response.text();
@@ -27,62 +25,61 @@ async function loadNav() {
   const userMenu = document.getElementById('user-menu');
 
   if (userMenuButton && userMenu) {
-    // Abrir al pasar el mouse
-    userMenuButton.addEventListener('mouseenter', () => {
-      userMenu.classList.remove('hidden');
-    });
-
-// Cerrar cuando se sale del botón o del menú
-    userMenuButton.addEventListener('mouseleave', () => {
-      setTimeout(() => {
-        if (!userMenu.matches(':hover')) {
-          userMenu.classList.add('hidden');
-        }
-      }, 150);
-    });
-
-    userMenu.addEventListener('mouseleave', () => {
-      userMenu.classList.add('hidden');
-    });
-
-    userMenu.addEventListener('mouseenter', () => {
-      userMenu.classList.remove('hidden');
-    });
+    userMenuButton.addEventListener('mouseenter', () => userMenu.classList.remove('hidden'));
+    userMenuButton.addEventListener('mouseleave', () => setTimeout(() => {
+        if (!userMenu.matches(':hover')) userMenu.classList.add('hidden');
+    }, 150));
+    userMenu.addEventListener('mouseleave', () => userMenu.classList.add('hidden'));
+    userMenu.addEventListener('mouseenter', () => userMenu.classList.remove('hidden'));
   }
 
-
-    // Lógica usuario supabase
+    // Lógica de usuario de Supabase (¡ACTUALIZADA!)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        document.getElementById('user-email').textContent = user.email;
-        document.getElementById('mobile-user-email').textContent = user.email;
+        const userEmailElement = document.getElementById('user-email');
+        const mobileUserEmailElement = document.getElementById('mobile-user-email');
+        if(userEmailElement) userEmailElement.textContent = user.email;
+        if(mobileUserEmailElement) mobileUserEmailElement.textContent = user.email;
 
-        const { data: profile } = await supabase
+        // Consultamos la tabla 'app_saas_users' para obtener el plan
+        const { data: profile, error } = await supabase
             .from('app_saas_users')
             .select('subscription_plan')
             .eq('id', user.id)
             .single();
 
         if (profile) {
-            const planText = `${profile.subscription_plan} Plan`;
-            document.getElementById('plan-info').textContent = planText;
-            document.getElementById('mobile-plan-info').textContent = planText;
+            const planName = profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1);
+            const planText = `${planName} Plan`;
+            
+            const planInfoElement = document.getElementById('plan-info');
+            const mobilePlanInfoElement = document.getElementById('mobile-plan-info');
+
+            if(planInfoElement) planInfoElement.textContent = planText;
+            if(mobilePlanInfoElement) mobilePlanInfoElement.textContent = planText;
+        } else if (error) {
+            console.error("Error al cargar el perfil del usuario:", error.message);
         }
     }
 
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
-    document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
+    const logoutBtn = document.getElementById('logout-btn');
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    if(logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    if(mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', handleLogout);
 
     // Resaltar link activo
     const currentPage = window.location.pathname.split('/').pop();
-    if (['lista-avisos.html','crear-aviso.html','detalles-aviso.html'].includes(currentPage)) {
-        document.getElementById('nav-link-busquedas').classList.add('text-indigo-600');
-    } else if (currentPage === 'base-talentos.html') {
-        document.getElementById('nav-link-talentos').classList.add('text-indigo-600');
-    } else if (currentPage === 'carga-masiva.html') {
-        document.getElementById('nav-link-carga').classList.add('text-indigo-600');
+    const navLinkBusquedas = document.getElementById('nav-link-busquedas');
+    const navLinkTalentos = document.getElementById('nav-link-talentos');
+    const navLinkCarga = document.getElementById('nav-link-carga');
+
+    if (['lista-avisos.html','crear-aviso.html','detalles-aviso.html'].includes(currentPage) && navLinkBusquedas) {
+        navLinkBusquedas.classList.add('text-indigo-600');
+    } else if (currentPage === 'base-talentos.html' && navLinkTalentos) {
+        navLinkTalentos.classList.add('text-indigo-600');
+    } else if (currentPage === 'carga-masiva.html' && navLinkCarga) {
+        navLinkCarga.classList.add('text-indigo-600');
     }
 }
-
 
 loadNav();

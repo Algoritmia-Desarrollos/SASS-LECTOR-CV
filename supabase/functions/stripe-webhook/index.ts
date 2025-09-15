@@ -13,11 +13,6 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const planMap = {
-  'price_1S7dEmGowZwzTW7Q26Zm2ebh': 'basic', // <-- REEMPLAZA CON TU PRICE ID REAL
-  'price_1S7eFsGowZwzTW7QB7eAKeSe': 'professional', // <-- REEMPLAZA CON TU PRICE ID REAL
-};
-
 serve(async (req) => {
   const signature = req.headers.get('Stripe-Signature')
   const body = await req.text()
@@ -38,19 +33,28 @@ serve(async (req) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        const priceId = subscription.items.data[0]?.price.id;
+        // Obtenemos el objeto de la suscripción desde Stripe
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         
+        // ¡LÓGICA MEJORADA! Leemos el plan directamente de la metadata
+        const newPlan = subscription.metadata.planId;
+        if (!newPlan) {
+            console.error('Webhook Error: planId no encontrado en la metadata de la suscripción.');
+            break;
+        }
+
         await supabaseAdmin
           .from('app_saas_users')
           .update({
-            subscription_plan: planMap[priceId] || 'free',
+            subscription_plan: newPlan, // 'basic' o 'professional'
             stripe_subscription_id: subscription.id
           })
           .eq('stripe_customer_id', session.customer);
         break;
       }
+
       case 'customer.subscription.deleted': {
+        // Cuando un usuario cancela, lo volvemos al plan 'free'
         await supabaseAdmin
           .from('app_saas_users')
           .update({ subscription_plan: 'free', stripe_subscription_id: null })

@@ -20,7 +20,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
-
     const { data: { user } } = await supabaseClient.auth.getUser()
     if (!user) throw new Error('Usuario no encontrado')
 
@@ -28,8 +27,8 @@ serve(async (req) => {
 
     // *** ¡IMPORTANTE! REEMPLAZA CON TUS IDs DE PRECIO REALES DE STRIPE ***
     const priceIds = {
-      basic: 'price_xxxxxxxxxxxxxxxxx', // ID del precio de 20 USD
-      professional: 'price_yyyyyyyyyyyyyyyyy' // ID del precio de 40 USD
+      basic: 'price_1S7dEmGowZwzTW7Q26Zm2ebh', // ID del precio de 20 USD
+      professional: 'price_xxxxxxxxxxxxxxxxx'   // ID del precio de 40 USD
     }
     const priceId = priceIds[planId];
     if (!priceId) throw new Error('ID de plan inválido');
@@ -48,7 +47,13 @@ serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${Deno.env.get('APP_SITE_URL')!}/configuracion.html#facturacion`,
+      // ¡NUEVA SECCIÓN! Aquí adjuntamos el nombre del plan a la suscripción
+      subscription_data: {
+        metadata: {
+          planId: planId // Guardamos 'basic' o 'professional'
+        }
+      },
+      success_url: `${Deno.env.get('APP_SITE_URL')!}/configuracion.html?status=success#facturacion`,
       cancel_url: `${Deno.env.get('APP_SITE_URL')!}/planes.html`,
     });
 
