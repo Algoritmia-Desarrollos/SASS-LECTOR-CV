@@ -14,7 +14,8 @@ const invoicesTableBody = document.getElementById('invoices-table-body');
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-  StripeHandler.initializeStripe('pk_test_51S7dAmGowZwzTW7QiCMdtytaka5tGNKHFv7wwNJGPgPwgKQZPL3OoxZ0E2EqV5JaECdLoylHPXkuWZzqriFYxocl000BwjtoWN'); // <-- REEMPLAZA con tu Clave Publicable
+  // Asegúrate de que tu clave publicable de Stripe esté aquí
+  StripeHandler.initializeStripe('pk_test_51S7dAmGowZwzTW7QiCMdtytaka5tGNKHFv7wwNJGPgPwgKQZPL3OoxZ0E2EqV5JaECdLoylHPXkuWZzqriFYxocl000BwjtoWN'); 
   
   loadBillingData();
   StripeHandler.checkPaymentStatus(handlePaymentStatus);
@@ -40,9 +41,8 @@ async function loadBillingData() {
 function updateBillingButton(profile) {
     manageBillingBtn.disabled = false;
     // Limpiamos listeners anteriores para evitar duplicados
-    manageBillingBtn.replaceWith(manageBillingBtn.cloneNode(true));
-    // Volvemos a obtener la referencia al nuevo botón
-    const newBillingBtn = document.getElementById('manage-billing-btn');
+    const newBillingBtn = manageBillingBtn.cloneNode(true);
+    manageBillingBtn.parentNode.replaceChild(newBillingBtn, manageBillingBtn);
 
     if (profile.subscription_plan !== 'free' && profile.stripe_customer_id) {
         newBillingBtn.textContent = 'Administrar Suscripción';
@@ -83,7 +83,8 @@ async function renderInvoiceHistory() {
 
 // --- MANEJADORES DE EVENTOS ---
 async function handleSubscribe() {
-    manageBillingBtn.disabled = true;
+    const btn = document.getElementById('manage-billing-btn');
+    btn.disabled = true;
     stripeFormContainer.classList.remove('hidden');
 
     try {
@@ -97,17 +98,18 @@ async function handleSubscribe() {
         });
     } catch (error) {
         showMessage(error.message);
-        manageBillingBtn.disabled = false;
+        btn.disabled = false;
     }
 }
 
 async function handleManageBilling() {
-    manageBillingBtn.disabled = true;
+    const btn = document.getElementById('manage-billing-btn');
+    btn.disabled = true;
     try {
         await StripeHandler.redirectToCustomerPortal();
     } catch (e) {
         alert('No se pudo abrir el portal de cliente.');
-        manageBillingBtn.disabled = false;
+        btn.disabled = false;
     }
 }
 
@@ -128,10 +130,16 @@ function handlePaymentStatus(status) {
 
 // --- FUNCIONES AUXILIARES DE UI ---
 function setLoading(isLoading) {
-    submitPaymentBtn.disabled = isLoading;
-    submitPaymentBtn.querySelector('#button-text').textContent = isLoading ? 'Procesando...' : 'Pagar ahora';
+    if(submitPaymentBtn) {
+        submitPaymentBtn.disabled = isLoading;
+        submitPaymentBtn.querySelector('#button-text').textContent = isLoading ? 'Procesando...' : 'Pagar ahora';
+    }
 }
 
 function showMessage(message, type = 'error') {
-    // ... (función showMessage que ya tenías)
+    if(paymentMessage){
+        paymentMessage.textContent = message;
+        paymentMessage.className = `hidden text-center text-sm mt-2 ${type === 'success' ? 'text-green-500' : 'text-red-500'}`;
+        paymentMessage.classList.remove('hidden');
+    }
 }

@@ -1,7 +1,8 @@
-// src/planes.js (Versión final con Enlaces de Pago)
+// src/planes.js (Versión final y definitiva)
 import { supabase } from './lib/supabaseClient.js';
 
 // --- ENLACES DE PAGO DE STRIPE ---
+// ¡Asegúrate de que estos enlaces son los correctos desde tu dashboard de Stripe!
 const paymentLinks = {
   basico: 'https://buy.stripe.com/test_7sY3cv2Mz9sxeJka8h8Vi00',
   profesional: 'https://buy.stripe.com/test_aFa7sL72PdINbx85S18Vi01'
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     buttonElement.disabled = true;
     buttonElement.textContent = 'Redirigiendo...';
     
-    // Pasamos el ID de usuario a Stripe para que el webhook sepa a quién actualizar
+    // Pasamos el ID de usuario a Stripe. Esto es crucial.
     const checkoutUrl = `${paymentLinks[planId]}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email)}`;
     window.location.href = checkoutUrl;
   };

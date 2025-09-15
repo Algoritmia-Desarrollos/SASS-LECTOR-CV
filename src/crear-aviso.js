@@ -139,7 +139,18 @@ avisoForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Guardando...';
 
-    // --- INICIO DE LA CORRECCIÓN ---
+    // Validación de fecha
+    const fechaValidaHasta = new Date(validoHastaInput.value);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Ignorar la hora para la comparación
+
+    if (fechaValidaHasta < hoy) {
+        alert("La fecha 'Válido hasta' no puede ser una fecha pasada.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar y Publicar';
+        return;
+    }
+
 
     // 1. Obtenemos el usuario actual de la sesión.
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -161,7 +172,6 @@ avisoForm.addEventListener('submit', async (e) => {
         user_id: user.id // 2. Añadimos el ID del usuario al objeto.
     };
 
-    // --- FIN DE LA CORRECCIÓN ---
 
     const { error } = await supabase.from('app_saas_avisos').insert(nuevoAviso);
 

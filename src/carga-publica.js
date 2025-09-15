@@ -30,6 +30,17 @@ window.addEventListener('DOMContentLoaded', async () => {
         showErrorView("Link Inválido", "Este enlace de carga no es correcto.");
         return;
     }
+    // VALIDACIÓN: Verificamos si el ownerId existe en la base de datos.
+    const { data: ownerProfile, error } = await supabase
+        .from('app_saas_users')
+        .select('id')
+        .eq('id', ownerId)
+        .single();
+
+    if (error || !ownerProfile) {
+        showErrorView("Enlace no válido", "El usuario asociado a este enlace no existe.");
+        return;
+    }
 });
 
 // --- LÓGICA DE SUBIDA (reutilizamos mucho código) ---
@@ -78,15 +89,6 @@ cvForm.addEventListener('submit', async (e) => {
 
 
 // --- FUNCIONES AUXILIARES (Idénticas a las de postulacion.js) ---
-function showErrorView(title, message) { /* ... */ }
-function handleFile(file) { /* ... */ }
-function fileToBase64(file) { /* ... */ }
-async function extractTextFromPdf(file) { /* ... */ }
-
-// (Pega aquí el código completo de las funciones auxiliares de 'postulacion.js' 
-// o impórtalas desde un archivo 'utils.js' compartido para no repetir código)
-
-// --- Pegado para completitud del ejemplo ---
 function showErrorView(title, message) {
     formView.classList.add('hidden');
     successView.classList.add('hidden');
@@ -103,7 +105,17 @@ function handleFile(file) {
         fileLabelText.textContent = selectedFile.name;
         uploadHint.textContent = '¡Listo para enviar!';
         submitBtn.disabled = false;
-    } else { /* ... */ }
+    } else {
+        selectedFile = null;
+        submitBtn.disabled = true;
+        dropZone.classList.remove('border-green-500', 'bg-green-50');
+        uploadIcon.className = 'fa-solid fa-cloud-arrow-up text-4xl text-gray-400';
+        fileLabelText.textContent = 'Arrastra y suelta tu CV aquí';
+        uploadHint.textContent = 'Solo PDF, máx: 5MB';
+        if (file) {
+            alert("Por favor, selecciona un archivo PDF de menos de 5MB.");
+        }
+    }
 }
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {

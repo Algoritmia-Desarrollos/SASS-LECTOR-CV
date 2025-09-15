@@ -1,5 +1,7 @@
+// src/cuenta.js
 import { supabase } from './lib/supabaseClient.js';
-// ... (mantén tus selectores del DOM)
+
+// --- SELECTORES DEL DOM ---
 const joinDateDisplay = document.getElementById('join-date');
 const avisosCountDisplay = document.getElementById('avisos-count');
 const candidatosCountDisplay = document.getElementById('candidatos-count');
@@ -10,7 +12,7 @@ const cvLimitDisplay = document.getElementById('cv-limit');
 const usageBar = document.getElementById('usage-bar');
 
 
-// --- Nuevos límites de planes ---
+// --- Límites de planes centralizados ---
 const planLimits = {
     gratis: 50,
     basico: 2000,
@@ -22,13 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no encontrado.");
 
+    // Ejecutamos las consultas en paralelo para mejorar el rendimiento
     const [profileRes, avisosRes, candidatosRes] = await Promise.all([
         supabase.from('app_saas_users').select('subscription_plan, cv_read_count').eq('id', user.id).single(),
         supabase.from('app_saas_avisos').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('app_saas_candidatos').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
     ]);
     
-    // ... (código para mostrar datos)
+    // Verificación de errores en las consultas
     if (profileRes.error) throw profileRes.error;
     if (avisosRes.error) throw avisosRes.error;
     if (candidatosRes.error) throw candidatosRes.error;
@@ -38,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const limit = planLimits[currentPlan];
     const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
     
+    // Rellenamos la UI con los datos obtenidos
     joinDateDisplay.textContent = new Date(user.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     avisosCountDisplay.textContent = avisosRes.count;
     candidatosCountDisplay.textContent = candidatosRes.count;
@@ -48,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (limit === Infinity) {
         cvLimitDisplay.textContent = `/ Ilimitados este mes`;
         usageBar.style.width = `100%`;
+        usageBar.classList.add('bg-green-500'); // Color especial para ilimitado
     } else {
         cvLimitDisplay.textContent = `/ ${limit} analizados este mes`;
         const usagePercentage = Math.min((profile.cv_read_count / limit) * 100, 100);
@@ -56,5 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (error) {
     console.error("Error al cargar datos de la cuenta:", error);
+    // Mostrar un mensaje de error genérico en la UI si algo falla
+    document.querySelector('main').innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los datos de tu cuenta. Por favor, intenta de nuevo más tarde.</p>';
   }
 });

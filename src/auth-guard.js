@@ -1,5 +1,5 @@
 // src/auth-guard.js
-import { supabase } from './lib/supabaseClient.js'; // <- RUTA CORREGIDA
+import { supabase } from '../lib/supabaseClient.js'; // <- RUTA CORREGIDA
 
 // Verificamos la sesión del usuario inmediatamente al cargar el script.
 const { data: { session } } = await supabase.auth.getSession();

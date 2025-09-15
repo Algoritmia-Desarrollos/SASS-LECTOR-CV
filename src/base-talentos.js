@@ -55,6 +55,7 @@ let currentSort = { column: 'created_at', ascending: false };
 let isUnreadFilterActive = false;
 let currentAvisoId = 'all';
 let draggedElement = null;
+let isDragging = false; // Flag para evitar conflictos de drag & drop
 
 // --- INICIALIZACIÓN ---
 window.addEventListener('DOMContentLoaded', async () => {
@@ -220,6 +221,11 @@ function addDragAndDropListeners() {
 }
 
 function handleDragStart(e) {
+    if (isDragging) {
+        e.preventDefault();
+        return;
+    }
+    isDragging = true;
     if (e.target.closest('.folder-item')) {
         draggedElement = { type: 'folder', id: e.target.closest('.folder-item').dataset.folderId };
         e.dataTransfer.setData('text/plain', `folder:${draggedElement.id}`);
@@ -234,15 +240,20 @@ function handleDragStart(e) {
     e.target.classList.add('dragging');
 }
 
+
 function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-function handleDragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+function handleDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    isDragging = false;
+}
 
 async function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
     const targetItem = e.currentTarget.closest('.folder-item');
     targetItem.classList.remove('drag-over');
+    isDragging = false;
 
     const targetFolderId = targetItem.dataset.folderId;
     const data = e.dataTransfer.getData('text/plain');
