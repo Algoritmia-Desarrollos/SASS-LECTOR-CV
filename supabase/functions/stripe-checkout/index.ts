@@ -28,7 +28,7 @@ serve(async (req) => {
     // *** ¡IMPORTANTE! REEMPLAZA CON TUS IDs DE PRECIO REALES DE STRIPE ***
     const priceIds = {
       basic: 'price_1S7dEmGowZwzTW7Q26Zm2ebh', // ID del precio de 20 USD
-      professional: 'price_xxxxxxxxxxxxxxxxx'   // ID del precio de 40 USD
+      professional: 'price_1S7eFsGowZwzTW7QB7eAKeSe' // ID del precio de 40 USD
     }
     const priceId = priceIds[planId];
     if (!priceId) throw new Error('ID de plan inválido');
@@ -47,7 +47,7 @@ serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      // ¡NUEVA SECCIÓN! Aquí adjuntamos el nombre del plan a la suscripción
+      // ¡CLAVE! Adjuntamos el nombre del plan para saber cuál activar en el webhook
       subscription_data: {
         metadata: {
           planId: planId // Guardamos 'basic' o 'professional'

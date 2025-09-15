@@ -25,6 +25,7 @@ serve(async (req) => {
       Deno.env.get('STRIPE_WEBHOOK_SIGNING_SECRET')!
     )
   } catch (err) {
+    console.error(`Error en la verificación del webhook: ${err.message}`);
     return new Response(err.message, { status: 400 })
   }
 
@@ -33,20 +34,18 @@ serve(async (req) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Obtenemos el objeto de la suscripción desde Stripe
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-        
-        // ¡LÓGICA MEJORADA! Leemos el plan directamente de la metadata
         const newPlan = subscription.metadata.planId;
+
         if (!newPlan) {
-            console.error('Webhook Error: planId no encontrado en la metadata de la suscripción.');
+            console.error('Webhook Error: planId no encontrado en la metadata.');
             break;
         }
 
         await supabaseAdmin
           .from('app_saas_users')
           .update({
-            subscription_plan: newPlan, // 'basic' o 'professional'
+            subscription_plan: newPlan,
             stripe_subscription_id: subscription.id
           })
           .eq('stripe_customer_id', session.customer);
@@ -54,7 +53,6 @@ serve(async (req) => {
       }
 
       case 'customer.subscription.deleted': {
-        // Cuando un usuario cancela, lo volvemos al plan 'free'
         await supabaseAdmin
           .from('app_saas_users')
           .update({ subscription_plan: 'free', stripe_subscription_id: null })
