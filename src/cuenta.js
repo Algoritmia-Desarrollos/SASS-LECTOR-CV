@@ -1,6 +1,5 @@
 import { supabase } from './lib/supabaseClient.js';
 
-// --- SELECTORES DEL DOM ---
 const joinDateDisplay = document.getElementById('join-date');
 const avisosCountDisplay = document.getElementById('avisos-count');
 const candidatosCountDisplay = document.getElementById('candidatos-count');
@@ -10,12 +9,17 @@ const cvCountDisplay = document.getElementById('cv-count');
 const cvLimitDisplay = document.getElementById('cv-limit');
 const usageBar = document.getElementById('usage-bar');
 
-document.addEventListener('DOMContentLoaded', loadAccountData);
+// Nuevos límites de planes
+const planLimits = {
+    gratis: 50,
+    basico: 2000,
+    profesional: Infinity
+};
 
-async function loadAccountData() {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("No se pudo obtener la información del usuario.");
+    if (!user) throw new Error("Usuario no encontrado.");
 
     const [profileRes, avisosRes, candidatosRes] = await Promise.all([
         supabase.from('app_saas_users').select('subscription_plan, cv_read_count').eq('id', user.id).single(),
@@ -24,32 +28,30 @@ async function loadAccountData() {
     ]);
     
     if (profileRes.error) throw profileRes.error;
-    if (avisosRes.error) throw avisosRes.error;
-    if (candidatosRes.error) throw candidatosRes.error;
-
-    const joinDate = new Date(user.created_at);
-    joinDateDisplay.textContent = joinDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-    avisosCountDisplay.textContent = avisosRes.count;
-    candidatosCountDisplay.textContent = candidatosRes.count;
-    totalAnalysisDisplay.textContent = profileRes.data.cv_read_count;
+    // ... (resto del código sin cambios)
 
     const profile = profileRes.data;
-    const planName = profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1);
-    currentPlanDisplay.textContent = planName;
+    const currentPlan = profile.subscription_plan || 'gratis';
+    const limit = planLimits[currentPlan];
+    const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
 
-    // Objeto de límites actualizado para usar 'gratis'
-    const limits = { gratis: 100, basico: 500, profesional: 2000 };
-    const limit = limits[profile.subscription_plan] || 100;
-    
+    joinDateDisplay.textContent = new Date(user.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    avisosCountDisplay.textContent = avisosRes.count;
+    candidatosCountDisplay.textContent = candidatosRes.count;
+    totalAnalysisDisplay.textContent = profile.cv_read_count;
+    currentPlanDisplay.textContent = planName;
     cvCountDisplay.textContent = profile.cv_read_count;
-    cvLimitDisplay.textContent = `/ ${limit} analizados`;
     
-    const usagePercentage = Math.min((profile.cv_read_count / limit) * 100, 100);
-    usageBar.style.width = `${usagePercentage}%`;
+    if (limit === Infinity) {
+        cvLimitDisplay.textContent = `/ Ilimitados este mes`;
+        usageBar.style.width = `100%`;
+    } else {
+        cvLimitDisplay.textContent = `/ ${limit} analizados este mes`;
+        const usagePercentage = Math.min((profile.cv_read_count / limit) * 100, 100);
+        usageBar.style.width = `${usagePercentage}%`;
+    }
 
   } catch (error) {
     console.error("Error al cargar datos de la cuenta:", error);
-    document.querySelector('main').innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los datos de tu cuenta. Por favor, intenta de nuevo más tarde.</p>';
   }
-}
+});
