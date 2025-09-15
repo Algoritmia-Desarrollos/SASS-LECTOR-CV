@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(
 
 const planMap = {
   'price_1S7dEmGowZwzTW7Q26Zm2ebh': 'basic', // <-- REEMPLAZA CON TU PRICE ID REAL
-  'price_yyyyyyyyyyyyyyyyy': 'professional', // <-- REEMPLAZA CON TU PRICE ID REAL
+  'price_1S7eFsGowZwzTW7QB7eAKeSe': 'professional', // <-- REEMPLAZA CON TU PRICE ID REAL
 };
 
 serve(async (req) => {

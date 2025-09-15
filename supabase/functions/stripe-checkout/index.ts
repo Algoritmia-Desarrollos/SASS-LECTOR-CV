@@ -30,7 +30,7 @@ serve(async (req) => {
     // IMPORTANTE: Usa el ID de PRECIO (price_...) que obtuviste de Stripe
     const priceIds = {
       basic: 'price_1S7dEmGowZwzTW7Q26Zm2ebh', // <-- REEMPLAZA ESTO CON TU ID DE PRECIO REAL
-      professional: 'price_yyyyyyyyyyyyyyyyy' // <-- REEMPLAZA CON TU OTRO ID DE PRECIO
+      professional: 'price_1S7eFsGowZwzTW7QB7eAKeSe' // <-- REEMPLAZA CON TU OTRO ID DE PRECIO
     }
     const priceId = priceIds[planId];
     if (!priceId) throw new Error('ID de plan inválido');

@@ -1,45 +1,45 @@
+// src/planes.js
+import { supabase } from './lib/supabaseClient.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-    const basicBtn = document.getElementById('upgrade-basic-btn');
-    const professionalBtn = document.getElementById('upgrade-professional-btn');
+    const basicBtn = document.getElementById('subscribe-basic-btn');
+    const professionalBtn = document.getElementById('subscribe-professional-btn');
 
-    // Objeto con los IDs de tus planes de Mercado Pago
-    const planConfig = {
-        basic: {
-            id: 'a32322dc215f432ba91d288e1cf7de88', 
-        },
-        professional: {
-            id: '367e0c6c5785494f905b048450a4fa37',
+    const handleSubscription = async (planId, buttonElement) => {
+        buttonElement.disabled = true;
+        buttonElement.textContent = 'Redirigiendo...';
+
+        try {
+            const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+                body: { planId: planId },
+            });
+
+            if (error) throw error;
+
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                throw new Error('No se pudo obtener la URL de pago.');
+            }
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            buttonElement.disabled = false;
+            buttonElement.textContent = `Elegir Plan ${planId.charAt(0).toUpperCase() + planId.slice(1)}`;
         }
-    };
-
-    const redirectToMercadoPago = (planName) => {
-        const selectedPlan = planConfig[planName];
-
-        if (!selectedPlan || selectedPlan.id.length < 30) {
-            alert('Error: ID del plan no está configurado correctamente en src/planes.js');
-            return;
-        }
-
-        // Construimos la URL de checkout
-        const checkoutUrl = `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${selectedPlan.id}`;
-        
-        // Redirigimos al usuario
-        window.location.href = checkoutUrl;
     };
 
     if (basicBtn) {
         basicBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            basicBtn.textContent = 'Redirigiendo...';
-            redirectToMercadoPago('basic');
+            handleSubscription('basic', basicBtn);
         });
     }
 
     if (professionalBtn) {
         professionalBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            professionalBtn.textContent = 'Redirigiendo...';
-            redirectToMercadoPago('professional');
+            handleSubscription('professional', professionalBtn);
         });
     }
 });
