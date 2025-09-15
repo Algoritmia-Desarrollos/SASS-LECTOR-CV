@@ -38,7 +38,8 @@ async function loadAccountData() {
     const planName = profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1);
     currentPlanDisplay.textContent = planName;
 
-    const limits = { free: 100, basic: 500, professional: 2000 };
+    // Objeto de límites actualizado para usar 'gratis'
+    const limits = { gratis: 100, basico: 500, profesional: 2000 };
     const limit = limits[profile.subscription_plan] || 100;
     
     cvCountDisplay.textContent = profile.cv_read_count;

@@ -25,13 +25,16 @@ serve(async (req) => {
 
     const { planId } = await req.json()
 
-    // *** ¡IMPORTANTE! REEMPLAZA CON TUS IDs DE PRECIO REALES DE STRIPE ***
+    // --- CORRECCIÓN AQUÍ ---
+    // Las claves ahora están en español para coincidir con el frontend.
     const priceIds = {
-      basic: 'price_1S7dEmGowZwzTW7Q26Zm2ebh', // ID del precio de 20 USD
-      professional: 'price_1S7eFsGowZwzTW7QB7eAKeSe' // ID del precio de 40 USD
+      basico: 'price_1S7dEmGowZwzTW7Q26Zm2ebh', 
+      profesional: 'price_1S7eFsGowZwzTW7QB7eAKeSe'
     }
+    // --- FIN DE LA CORRECCIÓN ---
+
     const priceId = priceIds[planId];
-    if (!priceId) throw new Error('ID de plan inválido');
+    if (!priceId) throw new Error(`ID de plan inválido: ${planId}`);
 
     const { data: profile } = await supabaseClient.from('app_saas_users').select('stripe_customer_id').eq('id', user.id).single();
     let customerId = profile?.stripe_customer_id;
@@ -47,13 +50,12 @@ serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      // ¡CLAVE! Adjuntamos el nombre del plan para saber cuál activar en el webhook
       subscription_data: {
         metadata: {
-          planId: planId // Guardamos 'basic' o 'professional'
+          planId: planId // Guardamos 'basico' o 'profesional'
         }
       },
-      success_url: `${Deno.env.get('APP_SITE_URL')!}/configuracion.html?status=success#facturacion`,
+      success_url: `${Deno.env.get('APP_SITE_URL')!}/mi-cuenta.html`,
       cancel_url: `${Deno.env.get('APP_SITE_URL')!}/planes.html`,
     });
 

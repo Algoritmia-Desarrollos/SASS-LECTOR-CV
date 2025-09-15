@@ -17,34 +17,58 @@
         <h1 class="mt-4 text-4xl font-extrabold text-gray-900">Encuentra el Plan Perfecto para Ti</h1>
         <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">Comienza gratis y escala a medida que tu equipo crece.</p>
     </div>
-    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="border border-gray-300 bg-white rounded-xl p-8 flex flex-col">
-            <h3 class="text-xl font-semibold text-gray-800">Gratis</h3>
-            <p class="text-4xl font-bold text-gray-900 my-6">$0<span class="text-lg font-medium text-gray-500">/mes</span></p>
-            <ul class="space-y-3 text-gray-600 flex-grow">
-                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>100 análisis de CV en total</li>
-            </ul>
-            <button class="mt-8 block w-full text-center bg-gray-500 text-white font-semibold py-3 rounded-lg cursor-default">Plan Actual</button>
+
+    <div id="pricing-container" class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <div id="plan-gratis" class="border border-gray-200 bg-white rounded-xl p-8 flex flex-col shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-800">Gratis</h3>
+        <p class="text-gray-500 mt-2 flex-grow">Para probar la plataforma.</p>
+        <p class="text-4xl font-bold text-gray-900 my-6">$0<span class="text-lg font-medium text-gray-500">/mes</span></p>
+        <ul class="space-y-3 text-gray-600">
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>100 análisis de CV en total</li>
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>1 Usuario</li>
+        </ul>
+        <div class="mt-8">
+          <button id="btn-plan-gratis" class="w-full text-center bg-gray-500 text-white font-semibold py-3 rounded-lg cursor-not-allowed">
+            Tu Plan Actual
+          </button>
         </div>
-        <div class="border-2 border-indigo-500 bg-white rounded-xl p-8 flex flex-col relative shadow-lg">
-            <span class="absolute top-0 -translate-y-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MÁS POPULAR</span>
-            <h3 class="text-xl font-semibold text-gray-900">Básico</h3>
-            <p class="text-4xl font-bold text-gray-900 my-6">$20<span class="text-lg font-medium text-gray-500">/mes</span></p>
-            <ul class="space-y-3 text-gray-600 flex-grow">
-                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>500 análisis de CV por mes</li>
-            </ul>
-            <button id="subscribe-basic-btn" class="mt-8 block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">Elegir Plan Básico</button>
+      </div>
+
+      <div id="plan-basico" class="border-2 border-indigo-500 bg-white rounded-xl p-8 flex flex-col relative shadow-lg">
+        <span class="absolute top-0 -translate-y-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MÁS POPULAR</span>
+        <h3 class="text-xl font-semibold text-gray-900">Básico</h3>
+        <p class="text-gray-500 mt-2 flex-grow">Ideal para reclutadores y startups.</p>
+        <p class="text-4xl font-bold text-gray-900 my-6">$20<span class="text-lg font-medium text-gray-500">/mes</span></p>
+        <ul class="space-y-3 text-gray-600">
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>500 análisis de CV por mes</li>
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>3 Usuarios (próximamente)</li>
+        </ul>
+        <div class="mt-8">
+          <button id="btn-plan-basico" data-plan="basico" class="w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">
+            Suscribirse
+          </button>
         </div>
-        <div class="border border-gray-300 bg-white rounded-xl p-8 flex flex-col">
-            <h3 class="text-xl font-semibold text-gray-900">Profesional</h3>
-            <p class="text-4xl font-bold text-gray-900 my-6">$40<span class="text-lg font-medium text-gray-500">/mes</span></p>
-            <ul class="space-y-3 text-gray-600 flex-grow">
-                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>2000 análisis de CV por mes</li>
-            </ul>
-            <button id="subscribe-professional-btn" class="mt-8 block w-full text-center bg-gray-700 hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition">Elegir Plan Profesional</button>
+      </div>
+
+      <div id="plan-profesional" class="border border-gray-200 bg-white rounded-xl p-8 flex flex-col shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-900">Profesional</h3>
+        <p class="text-gray-500 mt-2 flex-grow">Para equipos de RRHH en crecimiento.</p>
+        <p class="text-4xl font-bold text-gray-900 my-6">$40<span class="text-lg font-medium text-gray-500">/mes</span></p>
+        <ul class="space-y-3 text-gray-600">
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>2000 análisis de CV por mes</li>
+            <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-3"></i>10 Usuarios (próximamente)</li>
+        </ul>
+        <div class="mt-8">
+          <button id="btn-plan-profesional" data-plan="profesional" class="w-full text-center bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 rounded-lg transition">
+            Suscribirse
+          </button>
         </div>
+      </div>
+
     </div>
   </main>
+
   <script type="module" src="src/navigation.js"></script>
   <script type="module" src="src/planes.js"></script>
 </body>

@@ -1,16 +1,16 @@
 // src/postulacion.js
 import { supabase } from './lib/supabaseClient.js';
 
-// --- SELECTORES DEL DOM ---
+// --- SELECTORES DEL DOM (Sin cambios) ---
 const loadingView = document.getElementById('loading-view');
 const avisoHeader = document.getElementById('aviso-header');
+// ... (el resto de tus selectores aquí)
 const avisoTitulo = document.getElementById('aviso-titulo');
 const formView = document.getElementById('form-view');
 const successView = document.getElementById('success-view');
 const errorView = document.getElementById('error-view');
 const errorTitle = document.getElementById('error-title');
 const errorMessage = document.getElementById('error-message');
-
 const cvForm = document.getElementById('cv-form');
 const fileInput = document.getElementById('file-input');
 const submitBtn = document.getElementById('submit-btn');
@@ -20,9 +20,17 @@ const fileLabelText = document.getElementById('file-label-text');
 const uploadIcon = document.getElementById('upload-icon');
 const uploadHint = document.getElementById('upload-hint');
 
-// --- ESTADO ---
+
+// --- ESTADO (Sin cambios) ---
 let avisoActivo = null;
 let selectedFile = null;
+
+// --- LÍMITES DE PLANES ---
+const planLimits = {
+    free: 100,
+    basic: 500,
+    professional: 2000
+};
 
 // --- INICIALIZACIÓN ---
 window.addEventListener('DOMContentLoaded', async () => {
@@ -61,6 +69,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    // --- LÓGICA DE LÍMITES MEJORADA ---
     const { data: ownerProfile, error: profileError } = await supabase
         .from('app_saas_users')
         .select('subscription_plan, cv_read_count')
@@ -71,10 +80,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         showErrorView("Error del Reclutador", "No se pudo verificar la cuenta del reclutador.");
         return;
     }
-    if (ownerProfile.subscription_plan === 'free' && ownerProfile.cv_read_count >= 100) {
+
+    const plan = ownerProfile.subscription_plan || 'free';
+    const limit = planLimits[plan];
+    
+    if (ownerProfile.cv_read_count >= limit) {
         showErrorView("Límite Alcanzado", "El reclutador ha alcanzado el límite de CVs de su plan. Intenta más tarde.");
         return;
     }
+    // --- FIN DE LA LÓGICA DE LÍMITES ---
 
     avisoActivo = aviso;
     loadingView.classList.add('hidden');
@@ -84,7 +98,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// --- MANEJO DE ARCHIVOS (DRAG & DROP) ---
+// --- MANEJO DE ARCHIVOS Y FORMULARIO (Sin cambios) ---
+// ... (Pega aquí el resto de tu código de postulacion.js, no necesita cambios)
 function handleFile(file) {
     const maxSize = 5 * 1024 * 1024; // 5MB
     const allowedType = 'application/pdf';

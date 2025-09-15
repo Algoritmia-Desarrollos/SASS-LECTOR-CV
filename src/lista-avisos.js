@@ -19,8 +19,9 @@ async function loadUserInfoAndPlanLimits() {
     
     if (error) { console.error("Error al cargar perfil:", error); return; }
 
-    const planLimits = { free: 100, basic: 500, professional: 2000 };
-    const currentPlan = profile.subscription_plan;
+    // Objeto de límites actualizado para usar 'gratis'
+    const planLimits = { gratis: 100, basico: 500, profesional: 2000 };
+    const currentPlan = profile.subscription_plan || 'gratis';
     const limit = planLimits[currentPlan] || 100;
 
     if (freeTrialBanner && cvCountDisplay && cvLimitDisplay) {
@@ -29,8 +30,9 @@ async function loadUserInfoAndPlanLimits() {
         cvLimitDisplay.textContent = limit;
 
         const bannerTextElement = freeTrialBanner.querySelector('p');
-        if (currentPlan === 'free') {
-            bannerTextElement.innerHTML = `Estás en el plan gratuito. Has utilizado <strong>${profile.cv_read_count}</strong> de <strong>${limit}</strong> análisis de CV. <a href="planes.html" class="font-bold underline hover:text-indigo-900">Actualiza tu plan</a>.`;
+        // Lógica actualizada para mostrar "Plan Gratuito"
+        if (currentPlan === 'gratis') {
+            bannerTextElement.innerHTML = `Estás en el plan Gratuito. Has utilizado <strong>${profile.cv_read_count}</strong> de <strong>${limit}</strong> análisis de CV. <a href="planes.html" class="font-bold underline hover:text-indigo-900">Actualiza tu plan</a>.`;
         } else {
             const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
             bannerTextElement.innerHTML = `Estás en el plan ${planName}. Has utilizado <strong>${profile.cv_read_count}</strong> de <strong>${limit}</strong> análisis de CV este mes.`;
