@@ -1,13 +1,12 @@
-// src/planes.js (Versión final con Stripe Wrapper)
+// src/planes.js (Versión final con Enlaces de Pago)
 import { supabase } from './lib/supabaseClient.js';
 
-// --- ¡¡¡IMPORTANTE!!! ---
-// Pega aquí los enlaces de pago que copiaste desde tu dashboard de Stripe.
+// --- ENLACES DE PAGO DE STRIPE ---
 const paymentLinks = {
   basico: 'https://buy.stripe.com/test_7sY3cv2Mz9sxeJka8h8Vi00',
   profesional: 'https://buy.stripe.com/test_aFa7sL72PdINbx85S18Vi01'
 };
-// -------------------------
+// ---------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,13 +20,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const currentPlan = profile?.subscription_plan || 'gratis';
 
-  // Lógica para actualizar los botones (sin cambios)
   const currentPlanButton = document.getElementById(`btn-plan-${currentPlan}`);
   if (currentPlanButton) {
       currentPlanButton.textContent = 'Tu Plan Actual';
       currentPlanButton.disabled = true;
       currentPlanButton.classList.add('bg-gray-500', 'cursor-not-allowed');
   }
+
   ['gratis', 'basico', 'profesional'].forEach(plan => {
       if (plan !== currentPlan) {
           const button = document.getElementById(`btn-plan-${plan}`);
@@ -42,13 +41,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
   });
 
-  // Nueva función para redirigir al enlace de pago
   const handleSubscription = (planId, buttonElement) => {
     buttonElement.disabled = true;
     buttonElement.textContent = 'Redirigiendo...';
     
-    // Pasamos el email y el ID de usuario a Stripe.
-    const checkoutUrl = `${paymentLinks[planId]}?prefilled_email=${encodeURIComponent(user.email)}&client_reference_id=${user.id}`;
+    // Pasamos el ID de usuario a Stripe para que el webhook sepa a quién actualizar
+    const checkoutUrl = `${paymentLinks[planId]}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email)}`;
     window.location.href = checkoutUrl;
   };
 
