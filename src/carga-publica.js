@@ -1,5 +1,5 @@
 // src/carga-publica.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES (son casi idénticos a postulacion.js) ---
 const formView = document.getElementById('form-view');

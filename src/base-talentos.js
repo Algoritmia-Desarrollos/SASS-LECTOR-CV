@@ -1,5 +1,5 @@
 // src/base-talentos.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 import { showModal, hideModal } from './utils.js';
 
 // --- SELECTORES DEL DOM ---

@@ -1,5 +1,5 @@
 // src/crear-aviso.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL FORMULARIO ---
 const avisoForm = document.getElementById('aviso-form');

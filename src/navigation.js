@@ -1,5 +1,5 @@
 // src/navigation.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 async function handleLogout() {
     await supabase.auth.signOut();

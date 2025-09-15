@@ -1,5 +1,5 @@
 // src/postulacion.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL DOM ---
 const loadingView = document.getElementById('loading-view');

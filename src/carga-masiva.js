@@ -1,5 +1,5 @@
 // src/carga-masiva.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL DOM ---
 const fileInput = document.getElementById('file-input-masivo');

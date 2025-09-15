@@ -1,5 +1,5 @@
 // src/auth.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL DOM ---
 const googleAuthBtn = document.getElementById('google-auth-btn');

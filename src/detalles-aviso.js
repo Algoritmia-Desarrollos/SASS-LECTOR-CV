@@ -1,5 +1,5 @@
 // src/detalles-aviso.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL DOM ---
 const avisoTitulo = document.getElementById('aviso-titulo');

@@ -1,5 +1,5 @@
 // src/lista-avisos.js
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 // --- SELECTORES DEL DOM ---
 const avisoListBody = document.getElementById('aviso-list-body');
